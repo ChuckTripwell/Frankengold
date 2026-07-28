@@ -80,7 +80,10 @@ echo "[Install]" >> "$SERVICE"
 echo "WantedBy=graphical.target" >> "$SERVICE"
 
 chmod 0644 "$SERVICE"
-systemctl --root=/ enable mok-enroll.service
+
+# Manually create the target want symlink to ensure it's enabled in the image
+mkdir -p /usr/lib/systemd/system/graphical.target.wants
+ln -s /usr/lib/systemd/system/mok-enroll.service /usr/lib/systemd/system/graphical.target.wants/mok-enroll.service
 
 sbverify --cert "$SIGNING_CERT" "$VMLINUZ" >/dev/null 2>&1 || error "Verification failed."
 log "Kernel signing complete."
