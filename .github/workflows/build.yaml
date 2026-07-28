@@ -114,7 +114,7 @@ jobs:
           KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}-desktop
           DEFAULT_TAG: latest
-          SIGN_SCRIPT_PATH: ./build_files/sign-kernel.sh
+          SIGN_SCRIPT_PATH: /workspace/build_files/sign-kernel.sh
         run: |
           TARGET_IMAGE="${IMAGE_NAME}:${DEFAULT_TAG}"
           CONTAINER_ID=$(podman create --security-opt label=disable -v ./build_files:/workspace/build_files:z -e KERNEL_SECRET="${KERNEL_SECRET}" "${TARGET_IMAGE}" /bin/bash "${SIGN_SCRIPT_PATH}" "/")
