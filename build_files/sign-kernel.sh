@@ -74,14 +74,13 @@ echo "" >> "$SERVICE"
 echo "[Service]" >> "$SERVICE"
 echo "Type=oneshot" >> "$SERVICE"
 echo "RemainAfterExit=yes" >> "$SERVICE"
-echo "ExecStart=/bin/bash -c 'yes universalblue | mokutil --import /usr/share/cert/MOK.der && touch /etc/.mok_successfully_enrolled.lock'" >> "$SERVICE"
+echo "ExecStart=/bin/bash -c 'yes universalblue | mokutil --import /usr/share/cert/MOK.der && touch /etc/mok_successfully_enrolled.lock'" >> "$SERVICE"
 echo "" >> "$SERVICE"
 echo "[Install]" >> "$SERVICE"
 echo "WantedBy=graphical.target" >> "$SERVICE"
 
 chmod 0644 "$SERVICE"
-mkdir -p /usr/lib/systemd/system/sysinit.target.wants
-ln -sf "$SERVICE" /usr/lib/systemd/system/sysinit.target.wants/mok-enroll.service
+systemctl --root=/ enable mok-enroll.service
 
 sbverify --cert "$SIGNING_CERT" "$VMLINUZ" >/dev/null 2>&1 || error "Verification failed."
 log "Kernel signing complete."
