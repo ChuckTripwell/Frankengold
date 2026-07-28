@@ -113,14 +113,13 @@ jobs:
         env:
           KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}-desktop
-          DEFAULT_TAG: "latest"
-          SIGN_SCRIPT_PATH: "./build_files/sign-kernel.sh"
+          DEFAULT_TAG: latest
+          SIGN_SCRIPT_PATH: ./build_files/sign-kernel.sh
         run: |
           TARGET_IMAGE="${IMAGE_NAME}:${DEFAULT_TAG}"
-          CONTAINER_ID=$(podman create "${TARGET_IMAGE}")
-          podman unshare sh -c 'MOUNT_DIR=$(podman mount '"${CONTAINER_ID}"'); "${SIGN_SCRIPT_PATH}" "${MOUNT_DIR}"; podman unmount '"${CONTAINER_ID}"''
+          CONTAINER_ID=$(podman run -d --rm --security-opt label=disable -v ./build_files:/workspace/build_files:z -e KERNEL_SECRET="${KERNEL_SECRET}" "${TARGET_IMAGE}" /bin/bash "${SIGN_SCRIPT_PATH}" "/")
+          podman wait --condition=exited "${CONTAINER_ID}"
           podman commit "${CONTAINER_ID}" "${TARGET_IMAGE}"
-          podman rm "${CONTAINER_ID}"
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
