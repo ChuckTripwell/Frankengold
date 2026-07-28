@@ -118,11 +118,7 @@ jobs:
         run: |
           TARGET_IMAGE="${IMAGE_NAME}:${DEFAULT_TAG}"
           CONTAINER_ID=$(podman create "${TARGET_IMAGE}")
-          podman unshare bash -c '
-            MOUNT_DIR=\$(podman mount ${CONTAINER_ID})
-            KERNEL_SECRET="${KERNEL_SECRET}" "${SIGN_SCRIPT_PATH}" "\${MOUNT_DIR}"
-            podman unmount ${CONTAINER_ID}
-          '
+          podman unshare bash -c 'MOUNT_DIR=$(podman mount ${CONTAINER_ID}); KERNEL_SECRET="'"${KERNEL_SECRET}"'" "${SIGN_SCRIPT_PATH}" "${MOUNT_DIR}"; podman unmount ${CONTAINER_ID}'
           podman commit "${CONTAINER_ID}" "${TARGET_IMAGE}"
           podman rm "${CONTAINER_ID}"
 
