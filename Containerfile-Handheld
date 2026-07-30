@@ -38,12 +38,12 @@ RUN touch /usr/share/distrobox/distrobox.conf
 RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
 # :::::: install preformence-related stuff :::::: 
-RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
-    RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
-RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+#RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+#    RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+#RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
-RUN dnf5 -y install --allowerasing python3-pygame
+#RUN dnf5 -y install --allowerasing python3-pygame
 
 # :::::: Fix Audio :::::: 
 RUN mkdir -p /etc/systemd/user && \
