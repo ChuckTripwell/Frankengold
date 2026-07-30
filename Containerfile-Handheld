@@ -14,7 +14,7 @@ RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32
 ##################################################################################################################################################
 ### :::::: Pull Ublue-OS :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite-deck:latest
+FROM ghcr.io/ublue-os/bazzite-deck:testing
 
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules
@@ -44,7 +44,6 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install --allowerasing python3-pygame
-RUN dnf5 -y install --allowerasing zcfan
 
 # :::::: Fix Audio :::::: 
 RUN mkdir -p /etc/systemd/user && \
