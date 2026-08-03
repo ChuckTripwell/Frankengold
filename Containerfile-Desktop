@@ -55,9 +55,7 @@ RUN sed -i 's/^enabled=0$/enabled=1/' /etc/yum.repos.d/terra*
 RUN sed -i 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/terra*
 #
 
-# install am? 
-RUN cd /tmp && curl -s -Lo ./INSTALL https://raw.githubusercontent.com/ivan-hc/AM/main/INSTALL && chmod a+x ./INSTALL && sh ./INSTALL && rm ./INSTALL
-
+# :::::: Performance hack :::::: 
 # Set vm.max_map_count for stability/improved gaming performance
 # https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count
   RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
