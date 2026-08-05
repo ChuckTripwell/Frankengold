@@ -32,6 +32,11 @@ RUN curl -fsSL https://dl.controld.com/linux-amd64/ctrld \
     -o /usr/bin/ctrld && \
     chmod 755 /usr/bin/ctrld
 
+# :::::: install remora package-layering manager :::::: 
+RUN cd /usr/bin && curl -fsSL -o remora https://github.com/tuna-os/remora/releases/latest/download/remora-linux-amd64 && chmod +x ./remora
+RUN remora init
+RUN remora shims
+
 # :::::: tells distrobox use a sub-directory for /home :::::: 
 RUN mkdir -p /usr/share/distrobox/
 RUN touch /usr/share/distrobox/distrobox.conf
