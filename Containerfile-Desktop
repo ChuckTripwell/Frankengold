@@ -1,0 +1,23 @@
+
+FROM ghcr.io/ublue-os/base-main:latest AS conty
+
+RUN dnf5 -y install git wget 
+RUN cd / && wget https://github.com/Kron4ek/Conty/releases/download/1.29.3/conty_wine.sh && mv ./conty_wine.sh ./conty && chmod +x ./conty && ./conty -u plasma-meta
+
+
+
+FROM ghcr.io/projectbluefin/dakota-nvidia-gaming:testing
+
+COPY --from="conty" /conty /usr/bin/
+
+RUN mkdir -p  /root/.local/share/
+RUN git clone https://github.com/fsquillace/junest.git ~/.local/share/junest && export PATH=~/.local/share/junest/bin:$PATH && junest setup
+
+RUN junest -- sudo pacman -Sy plasma-meta
+
+
+
+RUN rm -rf /usr/etc
+CMD ["/sbin/init"]
+LABEL containers.bootc 1
+RUN bootc container lint
