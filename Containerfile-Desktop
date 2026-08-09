@@ -25,7 +25,7 @@ COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 
 
-RUN python3 -c "import re, glob; paths = [p for p in glob.glob('/usr/lib*/**/libcuda.so.1', recursive=True) if 'stubs' not in p]; assert paths and any(re.search(rb'NVRM version:', open(p, 'rb').read()) for p in paths), 'NVIDIA driver library version mismatch or invalid build'"
+RUN strings /usr/lib/x86_64-linux-gnu/libcuda.so.1 | grep -q "NVRM version:" || exit 1
 
 
 
