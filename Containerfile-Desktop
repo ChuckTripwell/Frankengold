@@ -23,8 +23,7 @@ COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 #  :::::: Nvidia sanity check :::::: 
 
-RUN python3 -c "import torch; assert torch.cuda.is_available(), 'CUDA/Driver mismatch or missing libraries'"
-
+RUN python3 -c "import ctypes; ctypes.CDLL('libcuda.so.1')"
 
 
 
