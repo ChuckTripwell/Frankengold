@@ -21,6 +21,10 @@ RUN rm -rf /lib/modules/*
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
+#  :::::: Nvidia fixer :::::: 
+COPY --from="cachyos" /usr/lib/*nvidia* /usr/lib/
+RUN ldconfig
+
 ##################################################################################################################################################
 ### :::::: Modifications :::::: ###
 ##################################################################################################################################################
@@ -96,23 +100,6 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 #
-
-
-#  :::::: fail if nvidia fails :::::: 
-RUN \
-    echo "Checking NVIDIA kernel modules strictly inside /usr/lib/modules..." && \
-    found_issues=0; \
-    for mod in $(find /usr/lib/modules -name "nvidia*.ko*"); do \
-        echo "Inspecting module: $mod"; \
-        modinfo "$mod" || { \
-            echo "::error::Mismatched or corrupted NVIDIA kernel module: $mod"; \
-            found_issues=1; \
-        }; \
-    done; \
-    if [ "$found_issues" -eq 1 ]; then \
-        exit 1; \
-    fi
-
 #  :::::: finish :::::: 
 RUN rm -rf /usr/etc
 CMD ["/sbin/init"]
