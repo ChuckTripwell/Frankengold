@@ -23,7 +23,10 @@ COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 #  :::::: Nvidia sanity check :::::: 
 
-RUN python3 -c "import ctypes; ctypes.CDLL('libcuda.so.1')"
+
+RUN python3 -c "import ctypes; lib = ctypes.CDLL('libcuda.so.1'); res = lib.cuInit(0); assert res == 0, f'CUDA driver mismatch or error code {res}'"
+
+
 
 
 
