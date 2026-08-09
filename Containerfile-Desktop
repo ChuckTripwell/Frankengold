@@ -99,7 +99,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 
 #  :::::: fail if nvidia fails :::::: 
-#RUN nvidia-smi --query-gpu=driver_version --format=csv,noheader || { echo "NVIDIA functionality is broken!"; exit 1; }
+RUN nvidia-smi --query-gpu=driver_version --format=csv,noheader || { echo "NVIDIA functionality is broken!"; exit 1; }
 
 #  :::::: finish :::::: 
 RUN rm -rf /usr/etc
