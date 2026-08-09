@@ -26,6 +26,30 @@ COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 RUN python3 -c "import torch; assert torch.cuda.is_available(), 'CUDA/Driver mismatch or missing libraries'"
 
 
+
+
+# Example inside your Containerfile (after installing your NVIDIA/CUDA RPMs or packages)
+RUN set -e && \
+    echo "Verifying NVIDIA user-space library packaging for bootc..." && \
+    
+    # 1. Verify critical user-space libraries exist in the image paths
+    for lib in libcuda.so libnvidia-ml.so; do \
+        if [ ! -e /usr/lib64/$lib ] && [ ! -e /usr/local/cuda/lib64/$lib ]; then \
+            echo "ERROR: Critical NVIDIA library $lib is missing from image build." >&2; \
+            exit 1; \
+        fi; \
+    done && \
+    
+    # 2. Check that the driver version string can be read from the installed package database 
+    # (e.g., RPM query for bootc-compatible systems like Fedora/RHEL)
+    if command -v rpm &> /dev/null; then \
+        rpm -q nvidia-driver-libs || rpm -q akmod-nvidia || echo "Warning: Standard NVIDIA RPM package not queried directly."; \
+    fi && \
+    
+    echo "1111NVIDIA container image packaging check passed successfully."
+
+
+
 ##################################################################################################################################################
 ### :::::: Modifications :::::: ###
 ##################################################################################################################################################
