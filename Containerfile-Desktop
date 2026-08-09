@@ -22,18 +22,15 @@ COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 #  :::::: Nvidia sanity check :::::: 
-# Extract versions from the installed components
-KERNEL_VER=$(modinfo nvidia 2>/dev/null | grep "^version:" | awk '{print $2}')
-USER_VER=$(strings /usr/lib64/libnvidia-ml.so.* 2>/dev/null | grep -m 1 "NVRM version:" | awk '{print $3}')
-
-echo "Kernel Module Version : ${KERNEL_VER:-Not Found}"
-echo "Userspace Library Ver : ${USER_VER:-Not Found}"
-
-# Fail the build if versions don't match or components are missing
-if [ -z "$KERNEL_VER" ] || [ -z "$USER_VER" ] || [ "$KERNEL_VER" != "$USER_VER" ]; then
-    echo "ERROR: Nvidia version mismatch or missing component detected!"
-    exit 1
-fi
+RUN set -euo pipefail && \
+    KERNEL_VER=$(modinfo nvidia 2>/dev/null | grep "^version:" | awk '{print $2}') && \
+    USER_VER=$(strings /usr/lib64/libnvidia-ml.so.* 2>/dev/null | grep -m 1 "NVRM version:" | awk '{print $3}') && \
+    echo "Kernel Module Version : ${KERNEL_VER:-Not Found}" && \
+    echo "Userspace Library Ver : ${USER_VER:-Not Found}" && \
+    if [ -z "$KERNEL_VER" ] || [ -z "$USER_VER" ] || [ "$KERNEL_VER" != "$USER_VER" ]; then \
+        echo "ERROR: Nvidia version mismatch or missing component detected!" >&2; \
+        exit 1; \
+    fi
 
 ##################################################################################################################################################
 ### :::::: Modifications :::::: ###
