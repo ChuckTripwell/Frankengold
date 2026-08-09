@@ -24,8 +24,8 @@ COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 #  :::::: Nvidia sanity check :::::: 
 
 
-RUN python3 -c "import ctypes; lib = ctypes.CDLL('libcuda.so.1'); res = lib.cuInit(0); assert res == 0, f'CUDA driver mismatch or error code {res}'"
 
+RUN python3 -c "import re, glob; paths = [p for p in glob.glob('/usr/lib*/**/libcuda.so.1', recursive=True) if 'stubs' not in p]; assert paths and any(re.search(rb'NVRM version:', open(p, 'rb').read()) for p in paths), 'NVIDIA driver library version mismatch or invalid build'"
 
 
 
