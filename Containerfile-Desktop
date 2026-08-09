@@ -99,7 +99,19 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 
 #  :::::: fail if nvidia fails :::::: 
-RUN nvidia-smi --query-gpu=driver_version --format=csv,noheader || { echo "NVIDIA functionality is broken!"; exit 1; }
+RUN \
+    echo "Checking NVIDIA kernel modules strictly inside /usr/lib/modules..." && \
+    found_issues=0; \
+    for mod in $(find /usr/lib/modules -name "nvidia*.ko*"); do \
+        echo "Inspecting module: $mod"; \
+        modinfo "$mod" || { \
+            echo "::error::Mismatched or corrupted NVIDIA kernel module: $mod"; \
+            found_issues=1; \
+        }; \
+    done; \
+    if [ "$found_issues" -eq 1 ]; then \
+        exit 1; \
+    fi
 
 #  :::::: finish :::::: 
 RUN rm -rf /usr/etc
