@@ -22,10 +22,9 @@ COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 #  :::::: Nvidia sanity check :::::: 
-RUN python3 -c 'import subprocess, sys; \
-    result = subprocess.run(["nvcc", "--version"], capture_output=True, text=True, check=True); \
-    assert "V12." in result.stdout, f"CUDA version mismatch detected: {result.stdout}"; \
-    print("Build-time CUDA compatibility check passed.")'
+
+RUN python3 -c "import torch; assert torch.cuda.is_available(), 'CUDA/Driver mismatch or missing libraries'"
+
 
 ##################################################################################################################################################
 ### :::::: Modifications :::::: ###
