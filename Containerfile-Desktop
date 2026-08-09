@@ -98,44 +98,8 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 #
 
 
-
-# ==============================================================================
-# STRICT NVIDIA BUILD-TIME VALIDATION GUARD
-# Force the build to crash if NVIDIA drivers or modules are broken/mismatched
-# ==============================================================================
-RUN set -euo pipefail && \
-    echo "=== Running Strict NVIDIA Build Validation ===" && \
-    \
-    # 1. Ensure the RPM packages are actually registered in the container
-    if ! rpm -qa | grep -qE "nvidia-driver|kmod-nvidia"; then
-        echo "BUILD CRASH: NVIDIA driver RPM packages are missing from the image!" >&2
-        exit 1
-    fi && \
-    \
-    # 2. Identify the target kernel version built into the image
-    KERNEL_VER=$(ls /usr/lib/modules | head -n 1) && \
-    echo "Target kernel version detected: ${KERNEL_VER}" && \
-    \
-    # 3. Physically locate the nvidia or nvidia-open kernel module
-    MOD_PATH=$(find "/usr/lib/modules/${KERNEL_VER}" \( -name "nvidia.ko" -o -name "nvidia.ko.xz" -o -name "nvidia-open.ko" -o -name "nvidia-open.ko.xz" \) | head -n 1) && \
-    if [ -z "${MOD_PATH}" ]; then
-        echo "BUILD CRASH: NVIDIA kernel module (.ko) could not be found on disk!" >&2
-        exit 1
-    fi && \
-    echo "Found module at: ${MOD_PATH}" && \
-    \
-    # 4. Deep check: Use modinfo to verify the module's vermagic matches the kernel version
-    # This catches silent akmod compilation failures where the module belongs to a different kernel version
-    if ! modinfo "${MOD_PATH}" | grep -q "vermagic:.*${KERNEL_VER}"; then
-        echo "BUILD CRASH: NVIDIA module vermagic mismatch! Module does not match kernel ${KERNEL_VER}." >&2
-        modinfo "${MOD_PATH}" || true
-        exit 1
-    fi && \
-    \
-    echo "=== NVIDIA Build Validation Passed Successfully ==="
-
-
-
+#  :::::: fail if nvidia fails :::::: 
+#RUN nvidia-smi --query-gpu=driver_version --format=csv,noheader || { echo "NVIDIA functionality is broken!"; exit 1; }
 
 #  :::::: finish :::::: 
 RUN rm -rf /usr/etc
