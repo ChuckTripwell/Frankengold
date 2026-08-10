@@ -1,10 +1,8 @@
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable AS base
 RUN rpm -E %fedora > /tmp/fedora-version
 
-FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable AS builder
-COPY --from=base /tmp/fedora-version /tmp/fedora-version
-RUN FTV=$(cat /tmp/fedora-version) && \
-    podman pull ghcr.io/ublue-os/akmods-nvidia-open:coreos-stable-${FTV}
+# 2. Pull the akmods-nvidia-open container using the dynamically matched tag 
+FROM ghcr.io/ublue-os/akmods-nvidia-open:coreos-stable-$(cat /tmp/fedora-version) AS akmods
 
 
 ##################################################################################################################################################
@@ -39,10 +37,9 @@ COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
 #  :::::: Nvidia :::::: 
 
 
-COPY --from=builder / /tmp/akmods-nvidia/
-RUN dnf5 install /tmp/akmods-nvidia/RPMS/kmods/*.rpm && \
+COPY --from=akmods / /tmp/akmods-nvidia/
+RUN dnf5 install -y /tmp/akmods-nvidia/rpms/*.rpm && \
     rm -rf /tmp/akmods-nvidia
-
 
 
 
