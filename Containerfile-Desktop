@@ -40,7 +40,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 #FROM ghcr.io/ublue-os/bazzite:stable
 
 FROM scratch AS final
-COPY --from="cachyos" /base /
+COPY --from="cachyos" /base/ /
 
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules/*
