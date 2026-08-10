@@ -22,6 +22,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
   RUN pacman -Sy --disable-sandbox --noconfirm --overwrite="*" --root /base --dbpath /base/var/lib/pacman \
       dkms nvidia-utils lib32-nvidia-utils
 
+RUN rm -rf /base/usr/lib/modules/*
   
 # :::::: prepare the kernel :::::: 
   RUN rm -rf /lib/modules/*
@@ -43,7 +44,7 @@ FROM scratch AS final
 COPY --from="cachyos" /base/ /
 
 # :::::: forcefully remove and replace kernel :::::: 
-RUN rm -rf /lib/modules/*
+#RUN rm -rf /lib/modules/*
 COPY --from="cachyos" /lib/modules /lib/modules
 COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
 
