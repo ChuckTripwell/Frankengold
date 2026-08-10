@@ -41,7 +41,7 @@ RUN dnf install -y curl tar && \
     . /etc/os-release && \
     mkdir -p /tmp/akmods && \
     regctl image export ghcr.io/ublue-os/akmods-nvidia-open:coreos-stable-$VERSION_ID | tar -x -C /tmp/akmods && \
-    dnf5 reinstall -y /tmp/akmods/rpms/ublue-os/*.rpm || dnf5 install -y /tmp/akmods/rpms/ublue-os/*.rpm || dnf5 install -y /tmp/*.rpm && \
+    dnf5 reinstall -y /tmp/ublue-os-nvidia-addons/rpmbuild/RPMS/noarch/*.rpm && \
     rm -rf /tmp/akmods /usr/local/bin/regctl
 
 
