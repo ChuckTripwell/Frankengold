@@ -5,14 +5,6 @@ FROM ghcr.io/ublue-os/bazzite:stable AS base
 ##################################################################################################################################################
 FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
-# :::::: prepare the kernel :::::: 
-  RUN rm -rf /lib/modules/*
-  RUN pacman -Sy --disable-sandbox --noconfirm
-  RUN pacman -Sy --disable-sandbox --noconfirm archlinux-keyring cachyos-keyring
-  RUN pacman -Sy --disable-sandbox --noconfirm
-  RUN pacman -S --disable-sandbox --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
-  RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
-
   RUN mkdir -p /base
   COPY --from="base" / /base/
 
@@ -24,12 +16,21 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
       cp /etc/pacman.d/mirrorlist /base/etc/pacman.d/mirrorlist && \
       cp -r /var/lib/pacman/local /base/var/lib/pacman/local
 
-  RUN pacman -S --disable-sandbox --noconfirm --root /base --dbpath /base/var/lib/pacman \
+  RUN pacman -Sy --disable-sandbox --noconfirm --root /base --dbpath /base/var/lib/pacman \
+    archlinux-keyring cachyos-keyring
+
+  RUN pacman -Sy --disable-sandbox --noconfirm --root /base --dbpath /base/var/lib/pacman \
       linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers \
       vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
 
   
-  
+# :::::: prepare the kernel :::::: 
+  RUN rm -rf /lib/modules/*
+  RUN pacman -Sy --disable-sandbox --noconfirm
+  RUN pacman -Sy --disable-sandbox --noconfirm archlinux-keyring cachyos-keyring
+  RUN pacman -Sy --disable-sandbox --noconfirm
+  RUN pacman -S --disable-sandbox --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
+  RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
 
 
 
