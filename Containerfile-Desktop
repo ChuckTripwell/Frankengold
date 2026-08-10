@@ -22,7 +22,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 
-COPY --from=ghcr.io/ublue-os/akmods-nvidia-open:coreos-stable-$( rpm -E %fedora ) / /tmp/akmods-nvidia/
+COPY --from=ghcr.io/ublue-os/akmods-nvidia-open:coreos-stable-44 / /tmp/akmods-nvidia/
 
 
 # :::::: forcefully remove and replace kernel :::::: 
