@@ -35,14 +35,12 @@ COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
 
 
 
-RUN dnf5 install -y curl tar && \
-    curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 -o /usr/local/bin/regctl && \
-    chmod 755 /usr/local/bin/regctl && \
-    . /etc/os-release && \
-    mkdir -p /tmp/akmods && \
-    regctl image export ghcr.io/ublue-os/akmods-nvidia-open:coreos-stable-$VERSION_ID | tar -x -C /tmp/akmods && \
-    dnf5 reinstall -y /tmp/akmods/rpms/ublue-os/*.rpm || dnf5 install -y /tmp/akmods/rpms/ublue-os/*.rpm || dnf5 install -y /tmp/*.rpm || dnf5 reinstall -y /tmp/ublue-os-nvidia-addons/rpmbuild/RPMS/noarch/*.rpm && \
-    rm -rf /tmp/akmods /usr/local/bin/regctl
+
+
+# Enable RPM Fusion and install the open Nvidia driver directly from upstream
+RUN dnf5 install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+                   https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm && \
+    dnf5 install -y akmod-nvidia-open xorg-x11-drv-nvidia-cuda
 
 
 
