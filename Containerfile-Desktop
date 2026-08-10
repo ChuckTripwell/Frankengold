@@ -35,7 +35,7 @@ COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
 
 
 
-RUN dnf install -y curl tar && \
+RUN dnf5 install -y curl tar && \
     curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 -o /usr/local/bin/regctl && \
     chmod 755 /usr/local/bin/regctl && \
     . /etc/os-release && \
