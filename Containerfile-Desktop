@@ -1,29 +1,31 @@
-FROM ghcr.io/ublue-os/bazzite:stable AS base
+#  RUN mkdir -p /base
+#  COPY --from="base" / /base/
+#
+#  RUN mkdir -p /base/var/lib/pacman \
+#               /base/var/cache/pacman/pkg \
+#               /base/etc/pacman.d
+#
+#  RUN cp /etc/pacman.conf /base/etc/pacman.conf && \
+#      cp /etc/pacman.d/mirrorlist /base/etc/pacman.d/mirrorlist && \
+#      cp -r /var/lib/pacman/local /base/var/lib/pacman/local
+#
+#  RUN pacman -Sy --disable-sandbox --noconfirm --overwrite="*" --root /base --dbpath /base/var/lib/pacman \
+#    archlinux-keyring cachyos-keyring
+#
+#  RUN pacman -Sy --disable-sandbox --noconfirm --overwrite="*" --root /base --dbpath /base/var/lib/pacman \
+#      dkms nvidia-utils lib32-nvidia-utils
+#
+#RUN rm -rf /base/usr/lib/modules/*
+#RUN mv /usr/lib/modules/* /usr/lib/modules/
+
+
+
 
 ##################################################################################################################################################
 ### :::::: Pull CachyOS :::::: ###
 ##################################################################################################################################################
 FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
-  RUN mkdir -p /base
-  COPY --from="base" / /base/
-
-  RUN mkdir -p /base/var/lib/pacman \
-               /base/var/cache/pacman/pkg \
-               /base/etc/pacman.d
-
-  RUN cp /etc/pacman.conf /base/etc/pacman.conf && \
-      cp /etc/pacman.d/mirrorlist /base/etc/pacman.d/mirrorlist && \
-      cp -r /var/lib/pacman/local /base/var/lib/pacman/local
-
-  RUN pacman -Sy --disable-sandbox --noconfirm --overwrite="*" --root /base --dbpath /base/var/lib/pacman \
-    archlinux-keyring cachyos-keyring
-
-  RUN pacman -Sy --disable-sandbox --noconfirm --overwrite="*" --root /base --dbpath /base/var/lib/pacman \
-      dkms nvidia-utils lib32-nvidia-utils
-
-RUN rm -rf /base/usr/lib/modules/*
-  
 # :::::: prepare the kernel :::::: 
   RUN rm -rf /lib/modules/*
   RUN pacman -Sy --disable-sandbox --noconfirm
@@ -33,18 +35,30 @@ RUN rm -rf /base/usr/lib/modules/*
   RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
 
 
+nvidia-smi --query-gpu=driver_version --format=csv,noheader > nvidia_version.txt
+
+#RUN pacman -S --disable-sandbox --noconfirm dnf5
+#RUN dnf5 -y install nvidia
 
 
 ##################################################################################################################################################
 ### :::::: Pull Ublue-OS :::::: ###
 ##################################################################################################################################################
-#FROM ghcr.io/ublue-os/bazzite:stable
+FROM ghcr.io/ublue-os/bazzite:stable
 
-FROM scratch AS final
-COPY --from="cachyos" /base/ /
+COPY --from="cachyos" /nvidia_version.txt /tmp/
+
+RUN dnf5 -y install \
+    https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm && \
+    NVIDIA_VER=$(cat /tmp/nvidia_version.txt) && \
+    dnf5 -y install \
+    akmod-nvidia-1:$NVIDIA_VER \
+    xorg-x11-drv-nvidia-cuda-3:$NVIDIA_VER \
+    --setopt=exclude=akmod-nvidia,xorg-x11-drv-nvidia-cuda
 
 # :::::: forcefully remove and replace kernel :::::: 
-#RUN rm -rf /lib/modules/*
+RUN rm -rf /lib/modules/*
 COPY --from="cachyos" /lib/modules /lib/modules
 COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
 
