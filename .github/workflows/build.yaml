@@ -87,17 +87,17 @@ jobs:
           sep-tags: " "
           sep-annotations: " "
 
-
-      - name: Build Handheld Image
-        id: build_handheld_image
-        uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
-        with:
-          containerfiles: |
-            ./Containerfile-Handheld
-          image: ${{ env.IMAGE_NAME }}-handheld
-          tags: ${{ steps.metadata.outputs.tags }}
-          labels: ${{ steps.metadata.outputs.labels }}
-          oci: true
+# remove #s when finished testing
+     # - name: Build Handheld Image
+     #   id: build_handheld_image
+     #   uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
+     #   with:
+     #     containerfiles: |
+     #       ./Containerfile-Handheld
+     #     image: ${{ env.IMAGE_NAME }}-handheld
+     #     tags: ${{ steps.metadata.outputs.tags }}
+     #     labels: ${{ steps.metadata.outputs.labels }}
+     #     oci: true
 
       - name: Build Desktop Image
         id: build_desktop_image
