@@ -1,3 +1,5 @@
+FROM ghcr.io/ublue-os/bazzite:stable AS base
+
 ##################################################################################################################################################
 ### :::::: Pull CachyOS :::::: ###
 ##################################################################################################################################################
@@ -11,6 +13,20 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
   RUN pacman -S --disable-sandbox --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
   RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
 
+  RUN mkdir -p /base
+  COPY --from="base" / /base/
+
+RUN mkdir -p /base/var/lib/pacman \
+             /base/var/cache/pacman/pkg \
+             /base/etc/pacman.d
+COPY /etc/pacman.conf /base/etc/pacman.conf
+COPY /etc/pacman.d/mirrorlist /base/etc/pacman.d/mirrorlist
+COPY /var/lib/pacman/local /base/var/lib/pacman/local
+  
+RUN pacman -S --disable-sandbox --noconfirm  --root /base --dbpath /build/var/lib/pacman \
+    linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers \
+    vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
+
   
   
 
@@ -20,10 +36,10 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 ##################################################################################################################################################
 ### :::::: Pull Ublue-OS :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
+#FROM ghcr.io/ublue-os/bazzite:stable
 
-
-
+FROM scratch AS final
+COPY --from="cachyos" /base /
 
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules/*
@@ -37,10 +53,7 @@ COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
 
 
 
-# Enable RPM Fusion and install the open Nvidia driver directly from upstream
-RUN dnf5 install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
-                   https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm && \
-    dnf5 install -y akmod-nvidia-open xorg-x11-drv-nvidia-cuda
+
 
 
 
