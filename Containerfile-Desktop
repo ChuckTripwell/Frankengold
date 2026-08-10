@@ -20,18 +20,26 @@ RUN pacman -Q nvidia-utils | awk '{print $2}' | cut -d- -f1 > /nvidia_version.tx
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite:stable
 
-RUN dnf5 -y remove nvidia-gpu-firmware || true
+RUN dnf5 -y remove nvidia-gpu-firmware
 
-COPY --from="cachyos" /nvidia_version.txt /tmp/
+
+
+
+COPY --from=cachyos /nvidia_version.txt /tmp/
 
 RUN dnf5 -y install \
     https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
-    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm && \
-    NVIDIA_VER=$(cat /tmp/nvidia_version.txt) && \
-    export AKMODS_BUILD_USER=akmods && \
-    dnf5 -y install --allowerasing \
+    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+RUN NVIDIA_VER=$(cat /tmp/nvidia_version.txt) && \
+    dnf5 -y install --allowerasing --setopt=tsflags=noscripts \
     akmod-nvidia-3:$NVIDIA_VER-* \
     xorg-x11-drv-nvidia-cuda-3:$NVIDIA_VER-*
+
+
+
+
+
 
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules/*
