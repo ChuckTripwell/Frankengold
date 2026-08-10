@@ -16,16 +16,17 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
   RUN mkdir -p /base
   COPY --from="base" / /base/
 
-RUN mkdir -p /base/var/lib/pacman \
-             /base/var/cache/pacman/pkg \
-             /base/etc/pacman.d
-COPY /etc/pacman.conf /base/etc/pacman.conf
-COPY /etc/pacman.d/mirrorlist /base/etc/pacman.d/mirrorlist
-COPY /var/lib/pacman/local /base/var/lib/pacman/local
-  
-RUN pacman -S --disable-sandbox --noconfirm  --root /base --dbpath /build/var/lib/pacman \
-    linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers \
-    vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
+  RUN mkdir -p /base/var/lib/pacman \
+               /base/var/cache/pacman/pkg \
+               /base/etc/pacman.d
+
+  RUN cp /etc/pacman.conf /base/etc/pacman.conf && \
+      cp /etc/pacman.d/mirrorlist /base/etc/pacman.d/mirrorlist && \
+      cp -r /var/lib/pacman/local /base/var/lib/pacman/local
+
+  RUN pacman -S --disable-sandbox --noconfirm --root /base --dbpath /base/var/lib/pacman \
+      linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers \
+      vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
 
   
   
