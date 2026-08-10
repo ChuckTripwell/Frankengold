@@ -1,10 +1,3 @@
-FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable AS base
-RUN rpm -E %fedora > /tmp/fedora-version
-
-# 2. Pull the akmods-nvidia-open container using the dynamically matched tag 
-FROM ghcr.io/ublue-os/akmods-nvidia-open:coreos-stable-$(cat /tmp/fedora-version) AS akmods
-
-
 ##################################################################################################################################################
 ### :::::: Pull CachyOS :::::: ###
 ##################################################################################################################################################
@@ -29,6 +22,9 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 
+COPY --from=ghcr.io/ublue-os/akmods-nvidia-open:coreos-stable-$( rpm -E %fedora ) / /tmp/akmods-nvidia/
+
+
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules/*
 COPY --from="cachyos" /lib/modules /lib/modules
@@ -37,7 +33,7 @@ COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
 #  :::::: Nvidia :::::: 
 
 
-COPY --from=akmods / /tmp/akmods-nvidia/
+
 RUN dnf5 install -y /tmp/akmods-nvidia/rpms/*.rpm && \
     rm -rf /tmp/akmods-nvidia
 
