@@ -20,7 +20,7 @@ RUN pacman -Q nvidia-utils | awk '{print $2}' | cut -d- -f1 > /nvidia_version.tx
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 
-RUN dnf5 -y remove nvidia-gpu-firmware
+RUN dnf5 -y remove nvidia-gpu-firmware nvidia-driver-common
 
 
 #RUN dnf5 remove -y nvidia*
