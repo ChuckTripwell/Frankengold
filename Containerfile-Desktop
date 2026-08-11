@@ -42,9 +42,15 @@ FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 
 # :::::: forcefully remove and replace kernel :::::: 
 # this is where the magic happens!
-  RUN rm -rf /lib/modules/* # removing any bazzite kernel present by force...
-  COPY --from="cachyos" /lib/modules /lib/modules # ...and then forcing in the cachyos kernel we installed earlier instead.
-  COPY --from="cachyos" /usr/share/licenses /usr/share/licenses # licenses, since we don't want to get in truble...
+
+# removing any bazzite kernel present by force...  
+  RUN rm -rf /lib/modules/*
+
+# ...and then forcing in the cachyos kernel we installed earlier instead.  
+  COPY --from="cachyos" /lib/modules /lib/modules
+
+# licenses, since we don't want to get in trouble...
+  COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
 
 ##################################################################################################################################################
 ### :::::: Modifications :::::: ###
