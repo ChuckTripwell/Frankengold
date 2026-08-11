@@ -3,7 +3,7 @@
 ##################################################################################################################################################
 FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
-# :::::: prepare the kernel :::::: 
+# :::::: Prepare the kernel :::::: 
   RUN rm -rf /lib/modules/*
   RUN pacman -Sy --disable-sandbox --noconfirm
   RUN pacman -Sy --disable-sandbox --noconfirm archlinux-keyring cachyos-keyring
@@ -11,8 +11,8 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
   RUN pacman -S --disable-sandbox --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
   RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms nvidia-utils lib32-nvidia-utils
 
-
-RUN pacman -Q nvidia-utils | awk '{print $2}' | cut -d- -f1 > /nvidia_version.txt
+#  :::::: Keep the Nvidia-driver version number to use later :::::: 
+  RUN pacman -Q nvidia-utils | awk '{print $2}' | cut -d- -f1 > /nvidia_version.txt
 
 
 ##################################################################################################################################################
@@ -20,80 +20,71 @@ RUN pacman -Q nvidia-utils | awk '{print $2}' | cut -d- -f1 > /nvidia_version.tx
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 
-RUN dnf5 -y remove nvidia-gpu-firmware nvidia-driver-common
+#  :::::: Nvidia fixes :::::: 
+# since we're using a forign kernel, the drivers must match their versions, otherwise the GPU will not be recognized.
 
+# so, first we remove the default nvidia driver...
+  RUN dnf5 -y remove nvidia-gpu-firmware nvidia-driver-common
 
-#RUN dnf5 remove -y nvidia*
+# then we check what the version was on cachyos:
+  COPY --from=cachyos /nvidia_version.txt /tmp/
 
-COPY --from=cachyos /nvidia_version.txt /tmp/
-
-RUN dnf5 -y install \
-    https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
-    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-
-RUN NVIDIA_VER=$(cat /tmp/nvidia_version.txt) && \
-    dnf5 -y install --allowerasing --setopt=tsflags=noscripts \
-    akmod-nvidia-3:$NVIDIA_VER-* \
-    xorg-x11-drv-nvidia-cuda-3:$NVIDIA_VER-*
-
-
-
-
+# enabling the rpmfusion repositories:
+  RUN dnf5 -y install \
+      https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+      https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+  
+# ...and now we can install the correct version of the drivers so that the forign kernel recognizes the GPU:
+  RUN NVIDIA_VER=$(cat /tmp/nvidia_version.txt) && \
+      dnf5 -y install --allowerasing --setopt=tsflags=noscripts \
+      akmod-nvidia-*:$NVIDIA_VER-* \
+      xorg-x11-drv-nvidia-cuda-*:$NVIDIA_VER-*
 
 # :::::: forcefully remove and replace kernel :::::: 
-RUN rm -rf /lib/modules/*
-COPY --from="cachyos" /lib/modules /lib/modules
-#COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
-
-#  :::::: Nvidia :::::: 
-
-
-
-
-
-
-
-
-
-
-
-
-
+# this is where the magic happens!
+  RUN rm -rf /lib/modules/* # removing any bazzite kernel present by force...
+  COPY --from="cachyos" /lib/modules /lib/modules # ...and then forcing in the cachyos kernel we installed earlier instead.
+  COPY --from="cachyos" /usr/share/licenses /usr/share/licenses # licenses, since we don't want to get in truble...
 
 ##################################################################################################################################################
 ### :::::: Modifications :::::: ###
 ##################################################################################################################################################
-# :::::: disable countme ( sorry, but I prefer my telemetry opt-in. ) :::::: 
-RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
+# :::::: disable countme :::::: 
+# ( sorry, I know it's safe, but I prefer my telemetry opt-in. )
+  RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
 
-# :::::: tells distrobox use a sub-directory for /home :::::: 
-RUN mkdir -p /usr/share/distrobox/
-RUN touch /usr/share/distrobox/distrobox.conf
-RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
-RUN dnf5 -y install --allowerasing distrobox
+# :::::: install controld dns :::::: 
+# can be activated manually
+  RUN curl -fsSL https://dl.controld.com/linux-amd64/ctrld -o /usr/bin/ctrld && chmod 755 /usr/bin/ctrld
 
-# :::::: preformence-related stuff :::::: 
+# :::::: tells distrobox to use a sub-directory for /home :::::: 
+# ...but only when using the command line!
+  RUN mkdir -p /usr/share/distrobox/
+  RUN touch /usr/share/distrobox/distrobox.conf
+  RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
+  RUN dnf5 -y install --allowerasing distrobox
+
+# :::::: Preformence-related stuff :::::: 
 # scx gui and settings - essential for performance
   RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
-    RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+  RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
   RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: Install Some Packages :::::: 
-#
-RUN sed -i 's/^enabled=0$/enabled=1/' /etc/yum.repos.d/terra*
-#
-  RUN dnf5 -y install --allowerasing python3-pygame
-  RUN dnf5 -y install --allowerasing zcfan
-  RUN dnf5 -y install --allowerasing kde-partitionmanager
-#
-RUN sed -i 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/terra*
-#
+# each line installs a new package, to make debugging easier.
+  RUN sed -i 's/^enabled=0$/enabled=1/' /etc/yum.repos.d/terra* # - enable terra repos
+      RUN dnf5 -y install --allowerasing zcfan # - can be activated manually
+      RUN dnf5 -y install --allowerasing kde-partitionmanager
+  RUN sed -i 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/terra* # - disable terra repos
 
-# Set vm.max_map_count for stability/improved gaming performance
-# https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count
+# ::::::  Set vm.max_map_count for stability/improved gaming performance :::::: 
+# as recommended here: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count
   RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
 
 # :::::: Fix Audio :::::: 
+# audio sometimes stops until a reboot. this SHOULD(?) fix the issue...
+
+# create service:
 RUN mkdir -p /etc/systemd/user && \
     echo "[Unit]" > /etc/systemd/user/audio-reset.service && \
     echo "Description=Reset audio on user session start" >> /etc/systemd/user/audio-reset.service && \
@@ -105,37 +96,46 @@ RUN mkdir -p /etc/systemd/user && \
     echo "" >> /etc/systemd/user/audio-reset.service && \
     echo "[Install]" >> /etc/systemd/user/audio-reset.service && \
     echo "WantedBy=default.target" >> /etc/systemd/user/audio-reset.service
-#
+
+# activate service:
 RUN systemctl --global enable audio-reset.service
 
 ##################################################################################################################################################
 ### :::::: Security and Finalization :::::: ###
 ##################################################################################################################################################
+
 # :::::: Fix SELinux :::::: 
-#
-RUN sed -i 's/^SELINUX=permissive/SELINUX=enforcing/' /etc/selinux/config
-#
-RUN touch /etc/.autorelabel
-#
-RUN mkdir -p /usr/lib/bootc/kargs.d/
-RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system/selinux-autorelabel-mark.service
-RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/libexec/selinux/selinux-autorelabel
-RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system-generators/selinux-autorelabel-generator.sh
-RUN echo 'kargs = ["lsm=landlock,lockdown,yama,integrity,selinux,bpf", "selinux=1", "enforcing=1", "selinux_dontaudit=0", "selinux_deny_unknown=1"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
-#
-RUN sed -i 's/active = yes/active = no/' /etc/audit/plugins.d/sedispatch.conf
-#
-# :::::: SecureBoot :::::: 
+# set SELinux to enforcing since I don't have time to read logs lol
+  RUN sed -i 's/^SELINUX=permissive/SELINUX=enforcing/' /etc/selinux/config
+
+# tell the system that .autorelabel is now in /etc to prevent a bootloop
+  RUN mkdir -p /usr/lib/bootc/kargs.d/
+  RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system/selinux-autorelabel-mark.service
+  RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/libexec/selinux/selinux-autorelabel
+  RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system-generators/selinux-autorelabel-generator.sh
+
+# create an .autorelabel file in /etc to prepare for SELinux
+  RUN touch /etc/.autorelabel
+
+# tell Grub to add kargs - without them SELinux and nvidia-drivers might not work
+  RUN echo 'kargs = ["lsm=landlock,lockdown,yama,integrity,selinux,bpf", "selinux=1", "enforcing=1", "selinux_dontaudit=0", "selinux_deny_unknown=1"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
+
+# change sedispatch state - needed for SELinux to work
+  RUN sed -i 's/active = yes/active = no/' /etc/audit/plugins.d/sedispatch.conf
+
+# :::::: Add support for SecureBoot :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
-#
-# :::::: slot the kernel into place :::::: 
+
+# :::::: Slot the kernel into place :::::: 
+# this section is the only reason this project is possible!!! do not change it and do not move it around.
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
       printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
       sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
-#
-#  :::::: finish :::::: 
+
+#  :::::: Finish :::::: 
+# finally!!!
 RUN rm -rf /usr/etc
 CMD ["/sbin/init"]
 LABEL containers.bootc 1
