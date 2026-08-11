@@ -136,7 +136,9 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 #  :::::: Finish :::::: 
 # finally!!!
-#RUN rm -rf /usr/etc
+# remove clutter
+RUN dnf5 -y clean all && rm -rf /var/cache/dnf /var/lib/dnf /tmp/*
+#? RUN rm -rf /usr/etc
 CMD ["/sbin/init"]
 LABEL containers.bootc 1
 RUN bootc container lint
