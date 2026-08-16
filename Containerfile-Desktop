@@ -132,7 +132,8 @@ RUN systemctl --global enable audio-reset.service
 # :::::: Add support for SecureBoot :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
 
-RUN sed -i -e '/SECUREBOOT_KEY=\/etc\/pki\/akmods\/certs\/akmods-ublue.der/a\    SECUREBOOT_KEY2=/usr/share/cert/MOK.der' -e '/mokutil --import "$SECUREBOOT_KEY"/a\    echo -e "$ENROLLMENT_PASSWORD\\n$ENROLLMENT_PASSWORD" | sudo mokutil --import "$SECUREBOOT_KEY2"' /usr/share/ublue-os/just/00-default.just
+RUN sed -i -E '/--timeout -1/a \    echo -e "$ENROLLMENT_PASSWORD\\n$ENROLLMENT_PASSWORD" | sudo mokutil --import "$SECUREBOOT_KEY2"' /usr/share/ublue-os/just/00-default.just
+RUN sed -i -E '/akmods-ublue\.der/a \    SECUREBOOT_KEY2=/usr/share/cert/MOK.der' /usr/share/ublue-os/just/00-default.just
 
 
 # :::::: Slot the kernel into place :::::: 
