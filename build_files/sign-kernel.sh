@@ -8,7 +8,7 @@ error() { echo "[custom-kernel] Error: $*"; exit 1; }
 
 SIGNING_KEY="/MOK.priv"
 SIGNING_CERT="/workspace/build_files/MOK.pem"
-MOK_CERT="${TARGET_DIR}/usr/share/cert/MOK.der"
+MOK_CERT="${TARGET_DIR}/etc/pki/akmods/certs/akmods-ublue.der"
 
 cleanup() {
     rm -f "$SIGNING_KEY"
@@ -76,7 +76,9 @@ echo "" >> "$SERVICE"
 echo "[Service]" >> "$SERVICE"
 echo "Type=oneshot" >> "$SERVICE"
 echo "RemainAfterExit=yes" >> "$SERVICE"
-echo "ExecStart=/bin/bash -c 'yes universalblue | mokutil --import /usr/share/cert/MOK.der && touch /etc/.mok_successfully_enrolled.lock'" >> "$SERVICE"
+echo "ExecStart=/bin/bash -c 'ujust enroll-secure-boot-key'" >> "$SERVICE"
+# original line:
+#echo "ExecStart=/bin/bash -c 'yes universalblue | mokutil --import /usr/share/cert/MOK.der && touch /etc/.mok_successfully_enrolled.lock'" >> "$SERVICE"
 echo "" >> "$SERVICE"
 echo "[Install]" >> "$SERVICE"
 echo "WantedBy=graphical.target" >> "$SERVICE"
