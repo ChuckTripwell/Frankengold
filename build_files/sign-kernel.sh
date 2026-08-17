@@ -8,7 +8,7 @@ error() { echo "[custom-kernel] Error: $*"; exit 1; }
 
 SIGNING_KEY="/MOK.priv"
 SIGNING_CERT="/workspace/build_files/MOK.pem"
-MOK_CERT="${TARGET_DIR}/etc/pki/akmods/certs/akmods-ublue.der"
+MOK_CERT="${TARGET_DIR}/usr/share/cert/MOK.der"
 
 cleanup() {
     rm -f "$SIGNING_KEY"
