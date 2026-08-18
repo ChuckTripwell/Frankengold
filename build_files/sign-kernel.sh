@@ -68,25 +68,27 @@ mkdir -p "${TARGET_DIR}/usr/share/cert" "${TARGET_DIR}/usr/lib/systemd/system"
 openssl x509 -in "$SIGNING_CERT" -outform DER -out "$MOK_CERT"
 
 SERVICE="${TARGET_DIR}/usr/lib/systemd/system/mok-enroll.service"
-echo "[Unit]" > "$SERVICE"
-echo "Description=Enroll MOK key after GUI starts" >> "$SERVICE"
-echo "ConditionPathExists=!/etc/.mok_successfully_enrolled.lock" >> "$SERVICE"
-echo "After=graphical.target" >> "$SERVICE"
-echo "" >> "$SERVICE"
-echo "[Service]" >> "$SERVICE"
-echo "Type=oneshot" >> "$SERVICE"
-echo "RemainAfterExit=yes" >> "$SERVICE"
-echo "ExecStart=/bin/bash -c 'ujust enroll-secure-boot-key'" >> "$SERVICE"
-# original line:
-#echo "ExecStart=/bin/bash -c 'yes universalblue | mokutil --import /usr/share/cert/MOK.der && touch /etc/.mok_successfully_enrolled.lock'" >> "$SERVICE"
-echo "" >> "$SERVICE"
-echo "[Install]" >> "$SERVICE"
-echo "WantedBy=graphical.target" >> "$SERVICE"
+cat << 'EOF' > "$SERVICE"
+[Unit]
+Description=Enroll MOK Key for Custom Kernel
+Before=graphical.target multi-user.target
+ConditionNeedsUpdate=/var
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c 'ujust enroll-secure-boot-key'
+
+[Install]
+WantedBy=multi-user.target
+EOF
 
 chmod 0644 "$SERVICE"
 
-mkdir -p "${TARGET_DIR}/usr/lib/systemd/system/graphical.target.wants"
-ln -s /usr/lib/systemd/system/mok-enroll.service "${TARGET_DIR}/usr/lib/systemd/system/graphical.target.wants/mok-enroll.service"
+mkdir -p "${TARGET_DIR}/usr/lib/systemd/system/multi-user.target.wants"
+ln -s /usr/lib/systemd/system/mok-enroll.service "${TARGET_DIR}/usr/lib/systemd/system/multi-user.target.wants/mok-enroll.service"
+
+systemctl start mok-enroll.service"
 
 sbverify --cert "$SIGNING_CERT" "$VMLINUZ" >/dev/null 2>&1 || error "Verification failed."
 log "Kernel signing complete."
