@@ -86,7 +86,5 @@ chmod 0644 "$SERVICE"
 mkdir -p "${TARGET_DIR}/usr/lib/systemd/system/multi-user.target.wants"
 ln -s /usr/lib/systemd/system/mok-enroll.service "${TARGET_DIR}/usr/lib/systemd/system/multi-user.target.wants/mok-enroll.service"
 
-systemctl start mok-enroll.service
-
 sbverify --cert "$SIGNING_CERT" "$VMLINUZ" >/dev/null 2>&1 || error "Verification failed."
 log "Kernel signing complete." 
