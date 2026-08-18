@@ -68,20 +68,18 @@ mkdir -p "${TARGET_DIR}/usr/share/cert" "${TARGET_DIR}/usr/lib/systemd/system"
 openssl x509 -in "$SIGNING_CERT" -outform DER -out "$MOK_CERT"
 
 SERVICE="${TARGET_DIR}/usr/lib/systemd/system/mok-enroll.service"
-cat << 'EOF' > "$SERVICE"
-[Unit]
-Description=Enroll MOK Key for Custom Kernel
-Before=graphical.target multi-user.target
-ConditionNeedsUpdate=/var
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/bin/bash -c 'ujust enroll-secure-boot-key'
-
-[Install]
-WantedBy=multi-user.target
-EOF
+echo "[Unit]" > "$SERVICE"
+echo "Description=Enroll MOK Key for Custom Kernel" >> "$SERVICE"
+echo "Before=graphical.target multi-user.target" >> "$SERVICE"
+echo "ConditionNeedsUpdate=/var" >> "$SERVICE"
+echo "" >> "$SERVICE"
+echo "[Service]" >> "$SERVICE"
+echo "Type=oneshot" >> "$SERVICE"
+echo "RemainAfterExit=yes" >> "$SERVICE"
+echo "ExecStart=/bin/bash -c 'ujust enroll-secure-boot-key'" >> "$SERVICE"
+echo "" >> "$SERVICE"
+echo "[Install]" >> "$SERVICE"
+echo "WantedBy=multi-user.target" >> "$SERVICE"
 
 chmod 0644 "$SERVICE"
 
