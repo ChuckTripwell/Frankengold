@@ -8,7 +8,5 @@ RUN pacman -S --disable-sandbox --noconfirm $(awk '/packages:/ {if($0~/\[/) {l=$
 
 RUN yes | pacman -Scc
 
-RUN systemctl enable sddm
-
 LABEL containers.bootc 1
 RUN bootc container lint
