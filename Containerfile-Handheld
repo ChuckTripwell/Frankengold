@@ -1,5 +1,7 @@
 FROM ghcr.io/ohaiibuzzle/cachy-bootc:latest AS base
 
+RUN rm -rf /usr/lib/modules/*
+
 RUN pacman -Sy --disable-sandbox --noconfirm
 RUN pacman -Sy --disable-sandbox --noconfirm archlinux-keyring cachyos-keyring wget
 RUN pacman -Sy --disable-sandbox --noconfirm
