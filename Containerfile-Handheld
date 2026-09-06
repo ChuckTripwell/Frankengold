@@ -1,8 +1,8 @@
 FROM ghcr.io/valerie-tar-gz/cachyos-bootc:latest
 
 
-RUN pacman -R linux
-RUN pacman -Sy linux-cachyos
+RUN pacman -R --noconfirm linux
+RUN pacman -Sy --noconfirm linux-cachyos
 
 
 RUN ln -s sysroot/ostree /ostree
