@@ -7,9 +7,10 @@ RUN rm -rf /lib/modules/*
 RUN pacman -Scc --noconfirm || true
 RUN rm -rf /var/lib/pacman/sync/*
 
-RUN pacman -Syy --noconfirm curl
+RUN pacman -Syy --noconfirm curl cachyos-keyring archlinux-keyring
 RUN curl https://raw.githubusercontent.com/CachyOS/cachyos-calamares/refs/heads/cachyos-deckify-qt6/src/modules/netinstall/netinstall.yaml > /tmp/packages.txt
 RUN pacman -Syu --noconfirm $(awk '/packages:/ {if($0~/\[/) {l=$0; sub(/.*\[/,"",l); sub(/\].*/,"",l); gsub(/["\x27]/,"",l); n=split(l,a,/,/); for(k=1;k<=n;k++) {gsub(/^[[:space:]]+|[[:space:]]+$/,"",a[k]); if(a[k]!="" && tolower(a[k])!~/firefox/) printf "%s ", a[k]}} else {f=1; i=match($0,/[^[:space:]]/)-1; next}} f {if(match($0,/[^[:space:]]/)-1<=i && $0!~/^[[:space:]]*$/) f=0; else if($0~/^[[:space:]]*-[[:space:]]/) {s=$0; sub(/^[[:space:]]*-[[:space:]]*/,"",s); sub(/#.*/,"",s); gsub(/["\x27]/,"",s); gsub(/^[[:space:]]+|[[:space:]]+$/,"",s); if(s!="" && tolower(s)!~/firefox/) printf "%s ", s}}' /tmp/packages.txt)
+
 
 RUN pacman -Scc --noconfirm || true
 RUN rm -rf /var/lib/pacman/sync/*
