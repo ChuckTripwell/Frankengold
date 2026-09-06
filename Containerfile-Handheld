@@ -25,7 +25,7 @@ RUN curl -sSL https://raw.githubusercontent.com/CachyOS/CachyOS-Live-ISO/refs/he
 #RUN yes | pacman -Sy --needed --noconfirm $( cat /tmp/packages.txt )
 
 
-RUN while pacman -Sy --needed --noconfirm $(cat /tmp/packages.txt) 2>&1 | tee /tmp/pacman.log | grep -q "are in conflict"; then \
+RUN while pacman -Sy --needed --noconfirm $(cat /tmp/packages.txt) 2>&1 | tee /tmp/pacman.log | grep -q "are in conflict"; do \
         conflicting_pkg=$(grep "are in conflict" /tmp/pacman.log | awk '{print $3}'); \
         echo "Removing conflicting package: $conflicting_pkg"; \
         pacman -Rdd --noconfirm "$conflicting_pkg"; \
