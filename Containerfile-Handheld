@@ -1,60 +1,13 @@
-FROM docker.io/cachyos/cachyos-v3:latest AS builder
-RUN pacman -Sy --noconfirm git && \
-    git clone https://aur.archlinux.org/bootc.git /bootc && \
-    rm -r /bootc/.git && \
-    useradd -m builder && \
-    echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers && \
-    install -d -o builder /bootc
-USER builder
-WORKDIR /bootc
-RUN makepkg -cs --noconfirm
-
-
-FROM docker.io/cachyos/cachyos-v3:latest AS bootstrapper
-COPY --from=builder /bootc/bootc-*.pkg.tar.zst /tmp
-COPY files /mnt
-RUN pacman -Sy --noconfirm arch-install-scripts && \
-    pacstrap /mnt base && \
-    pacstrap -U /mnt /tmp/bootc-*.pkg.tar.zst && \
-    mv /mnt/var/lib/pacman /mnt/usr/lib/pacman
-
-
-FROM scratch AS base
-
-COPY --from=bootstrapper /mnt /
-RUN pacman -Scc --noconfirm && \
-    # nonempty-boot
-    rm -rf /boot/* && \
-    # nonempty-run-tmp
-    rm -rf /run/* /tmp/* && \
-    # var-log
-    rm -rf /var/log/* && \
-    # var-tmpfiles
-    rm -rf /var/cache/* /var/log/* /var/db/* /var/lib/* && \
-   # bootc container lint --fatal-warnings
-
-
-FROM base AS installer
-RUN pacman -S linux-firmware wpa_supplicant skopeo dosfstools e2fsprogs --noconfirm && \
-    systemctl enable systemd-networkd.service && \
-    systemctl enable systemd-resolved.service && \
-    ln -s /usr/lib/systemd/network/80-wifi-station.network.example /etc/systemd/network/80-wifi-station.network && \
-    ln -s /usr/lib/systemd/network/89-ethernet.network.example /etc/systemd/network/89-ethernet.network && \
-    passwd -d root
 
 
 
+FROM ghcr.io/cmspam/cache22-cachy-kde:rolling
 
 
-
-
-
-
-
-RUN pacman -Scc --noconfirm || true
-RUN rm -rf /var/lib/pacman/sync/*
 
 RUN rm -rf /usr/lib/modules/*
+
+
 
 RUN pacman -Sy --disable-sandbox --noconfirm
 RUN pacman -Syy --disable-sandbox --noconfirm archlinux-keyring cachyos-keyring curl
