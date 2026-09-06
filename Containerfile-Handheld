@@ -1,3 +1,13 @@
+FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
+
+# :::::: prepare the kernel :::::: 
+RUN rm -rf /lib/modules/*
+RUN pacman -Sy --disable-sandbox --noconfirm
+RUN pacman -Sy --disable-sandbox --noconfirm archlinux-keyring cachyos-keyring
+RUN pacman -Sy --disable-sandbox --noconfirm
+RUN pacman -S --disable-sandbox --noconfirm linux-cachyos-deckify
+RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms
+
 FROM ghcr.io/existingperson08/arch-base:latest
 #FROM ghcr.io/existingperson08/arch-base-cachy:latest
 
@@ -11,7 +21,14 @@ RUN curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz && \
 
 RUN pacman -Syu --needed --noconfirm
 
-RUN rm -rf /lib/modules/*
+
+
+RUN rm -rf /lib/modules
+COPY --from=cachyos /lib/modules /lib/modules
+
+
+
+
 
 RUN pacman -Scc --noconfirm || true
 RUN rm -rf /var/lib/pacman/sync/*
