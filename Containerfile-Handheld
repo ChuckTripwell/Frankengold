@@ -1,3 +1,6 @@
+##################################################################################################################################################
+### :::::: Pull CachyOS :::::: ###
+##################################################################################################################################################
 FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
 # :::::: prepare the kernel :::::: 
@@ -8,52 +11,77 @@ RUN pacman -Sy --disable-sandbox --noconfirm
 RUN pacman -S --disable-sandbox --noconfirm linux-cachyos-deckify
 RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms
 
-FROM ghcr.io/existingperson08/arch-base:latest
-#FROM ghcr.io/existingperson08/arch-base-cachy:latest
+##################################################################################################################################################
+### :::::: Pull Ublue-OS :::::: ###
+##################################################################################################################################################
+FROM ghcr.io/ublue-os/bazzite-deck:testing
 
-RUN mkdir -p /var/lib/pacman && pacman-db-upgrade || true
-#RUN curl https://raw.githubusercontent.com/archlinux/archiso/refs/heads/master/configs/releng/pacman.conf > /etc/pacman.conf
-
-RUN curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz && \
-    tar xf cachyos-repo.tar.xz && \
-    cd cachyos-repo && \
-    yes | ./cachyos-repo.sh
-
-RUN pacman -Syu --needed --noconfirm
-
-
-
+# :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules
 COPY --from=cachyos /lib/modules /lib/modules
+COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
+##################################################################################################################################################
+### :::::: Modifications :::::: ###
+##################################################################################################################################################
+# :::::: disable countme ( I like my telemetry opt-in,thank you very much. you can enable it if you want... ) :::::: 
+RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
 
+# :::::: install controld dns :::::: 
+RUN curl -fsSL https://dl.controld.com/linux-amd64/ctrld \
+    -o /usr/bin/ctrld && \
+    chmod 755 /usr/bin/ctrld
 
+# :::::: force distrobox to use a sub-directory for home :::::: 
+RUN mkdir -p /usr/share/distrobox/
+RUN touch /usr/share/distrobox/distrobox.conf
+RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
+# :::::: install preformence-related stuff :::::: 
+#RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+#    RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+#RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
-RUN pacman -Scc --noconfirm || true
-RUN rm -rf /var/lib/pacman/sync/*
+# :::::: install additional stuff :::::: 
+#RUN dnf5 -y install --allowerasing python3-pygame
 
-RUN pacman -Syyu --needed --noconfirm curl
+# :::::: Fix Audio :::::: 
+RUN mkdir -p /etc/systemd/user && \
+    echo "[Unit]" > /etc/systemd/user/audio-reset.service && \
+    echo "Description=Reset audio on user session start" >> /etc/systemd/user/audio-reset.service && \
+    echo "After=pipewire.service wireplumber.service" >> /etc/systemd/user/audio-reset.service && \
+    echo "" >> /etc/systemd/user/audio-reset.service && \
+    echo "[Service]" >> /etc/systemd/user/audio-reset.service && \
+    echo "Type=oneshot" >> /etc/systemd/user/audio-reset.service && \
+    echo "ExecStart=/usr/bin/systemctl --user restart pipewire pipewire-pulse wireplumber" >> /etc/systemd/user/audio-reset.service && \
+    echo "" >> /etc/systemd/user/audio-reset.service && \
+    echo "[Install]" >> /etc/systemd/user/audio-reset.service && \
+    echo "WantedBy=default.target" >> /etc/systemd/user/audio-reset.service
+#
+RUN systemctl --global enable audio-reset.service
 
-#RUN curl https://raw.githubusercontent.com/CachyOS/cachyos-calamares/refs/heads/cachyos-deckify-qt6/src/modules/netinstall/netinstall.yaml > /tmp/packages.txt
-#RUN pacman -Sy --needed --noconfirm $(awk '/packages:/ {if($0~/\[/) {l=$0; sub(/.*\[/,"",l); sub(/\].*/,"",l); gsub(/["\x27]/,"",l); n=split(l,a,/,/); for(k=1;k<=n;k++) {gsub(/^[[:space:]]+|[[:space:]]+$/,"",a[k]); if(a[k]!="" && tolower(a[k])!~/firefox/) printf "%s ", a[k]}} else {f=1; i=match($0,/[^[:space:]]/)-1; next}} f {if(match($0,/[^[:space:]]/)-1<=i && $0!~/^[[:space:]]*$/) f=0; else if($0~/^[[:space:]]*-[[:space:]]/) {s=$0; sub(/^[[:space:]]*-[[:space:]]*/,"",s); sub(/#.*/,"",s); gsub(/["\x27]/,"",s); gsub(/^[[:space:]]+|[[:space:]]+$/,"",s); if(s!="" && tolower(s)!~/firefox/) printf "%s ", s}}' /tmp/packages.txt)
+# Set vm.max_map_count for stability/improved gaming performance
+# https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count
+  RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
 
-RUN curl -sSL https://raw.githubusercontent.com/CachyOS/CachyOS-Live-ISO/refs/heads/cachyos-deckify/archiso/packages_handheld.x86_64 > /tmp/packages.txt
-#RUN yes | pacman -Sy --needed --noconfirm $( cat /tmp/packages.txt )
-
-#RUN pacman -Sy --noconfirm --overwrite="*" linux-cachyos-deckify linux-cachyos-deckify-headers
-
-RUN while pacman -Sy --needed --noconfirm $(cat /tmp/packages.txt) 2>&1 | tee /tmp/pacman.log | grep -q "are in conflict"; do \
-        conflicting_pkg=$(grep "are in conflict" /tmp/pacman.log | sed -E 's/.*and ([^ ]+) are in.*/\1/'); \
-        echo "Removing conflicting package: $conflicting_pkg"; \
-        pacman -Rdd --noconfirm "$conflicting_pkg" || break; \
-    done
-
-RUN pacman -R --noconfirm firefox || true
-
-RUN pacman -Scc --noconfirm || true
-RUN rm -rf /var/lib/pacman/sync/*
-
+##################################################################################################################################################
+### :::::: Security and Finalization :::::: ###
+##################################################################################################################################################
+# :::::: Fix SELinux :::::: 
+#
+RUN sed -i 's/^SELINUX=permissive/SELINUX=enforcing/' /etc/selinux/config
+#
+RUN touch /etc/.autorelabel
+#
+RUN mkdir -p /usr/lib/bootc/kargs.d/
+RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system/selinux-autorelabel-mark.service
+RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/libexec/selinux/selinux-autorelabel
+RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system-generators/selinux-autorelabel-generator.sh
+RUN echo 'kargs = ["lsm=landlock,lockdown,yama,integrity,selinux,bpf", "selinux=1", "enforcing=1", "selinux_dontaudit=0", "selinux_deny_unknown=1"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
+#
+RUN sed -i 's/active = yes/active = no/' /etc/audit/plugins.d/sedispatch.conf
+#
+# :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
       printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
