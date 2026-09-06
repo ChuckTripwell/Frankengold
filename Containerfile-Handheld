@@ -7,12 +7,12 @@ FROM ghcr.io/cmspam/cache22-cachy-server:rolling
 RUN mkdir -p /usr/lib/sysimage/pacman/gnupg
 RUN pacman-key --init && pacman-key --populate
 
+RUN pacman -Syy --noconfirm
 
 
 
 
-
-RUN pacman -R --noconfirm linux-cachyos
+RUN pacman -R --noconfirm linux-cachyos* || true
 
 
 
