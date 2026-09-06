@@ -1,8 +1,8 @@
-
-FROM ghcr.io/existingperson08/arch-base-cachy:latest
+FROM ghcr.io/existingperson08/arch-base:latest
+#FROM ghcr.io/existingperson08/arch-base-cachy:latest
 
 RUN mkdir -p /var/lib/pacman && pacman-db-upgrade || true
-RUN curl https://raw.githubusercontent.com/archlinux/archiso/refs/heads/master/configs/releng/pacman.conf > /etc/pacman.conf
+#RUN curl https://raw.githubusercontent.com/archlinux/archiso/refs/heads/master/configs/releng/pacman.conf > /etc/pacman.conf
 
 RUN curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz && \
     tar xf cachyos-repo.tar.xz && \
