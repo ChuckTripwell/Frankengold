@@ -3,6 +3,15 @@
 
 FROM ghcr.io/cmspam/cache22-cachy-kde:rolling
 
+
+RUN mkdir -p /usr/lib/sysimage/pacman/gnupg
+RUN pacman-key --init && pacman-key --populate
+
+
+
+
+
+
 RUN pacman -R --noconfirm $( pacman -Qqe )
 
 
@@ -10,8 +19,7 @@ RUN pacman -R --noconfirm $( pacman -Qqe )
 RUN rm -rf /usr/lib/modules/*
 
 
-RUN mkdir -p /usr/lib/sysimage/pacman/gnupg
-RUN pacman-key --init && pacman-key --populate
+
 
 
 RUN pacman -Sy --disable-sandbox --noconfirm
