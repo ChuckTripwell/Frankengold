@@ -1,4 +1,27 @@
 ##################################################################################################################################################
-### :::::: Pull CachyOS :::::: ###
-##################################################################################################################################################
-FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
+FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
+
+
+# :::::: Add support for SecureBoot :::::: 
+RUN dnf5 -y install --allowerasing mokutil sbsigntools
+
+RUN sed -i -E '/sudo mokutil --timeout -1/a \    echo -e "$ENROLLMENT_PASSWORD\\n$ENROLLMENT_PASSWORD" | sudo mokutil --import "$SECUREBOOT_KEY2"' /usr/share/ublue-os/just/00-default.just
+RUN sed -i -E '/akmods-ublue.der/a \    SECUREBOOT_KEY2=/usr/share/cert/MOK.der' /usr/share/ublue-os/just/00-default.just
+
+
+# :::::: Slot the kernel into place :::::: 
+# this section is the only reason this project is possible!!! do not change it and do not move it around.
+RUN mkdir -p /var/tmp
+RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
+      printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
+      sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
+      dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
+
+#  :::::: Finish :::::: 
+# finally!!!
+# remove clutter
+RUN dnf5 -y clean all && rm -rf /var/cache/dnf /var/lib/dnf /tmp/*
+#? RUN rm -rf /usr/etc
+CMD ["/sbin/init"]
+LABEL containers.bootc 1
+RUN bootc container lint
