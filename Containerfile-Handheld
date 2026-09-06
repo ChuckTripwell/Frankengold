@@ -1,4 +1,4 @@
-FROM ghcr.io/cmspam/cache22-cachy-kde:rolling AS base
+FROM ghcr.io/tartaria-dev/tartaria:unstable-cachy-mahleb AS base
 
 LABEL containers.bootc 1
 RUN bootc container lint
