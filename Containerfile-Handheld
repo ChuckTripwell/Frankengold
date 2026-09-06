@@ -4,7 +4,7 @@
 FROM ghcr.io/cmspam/cache22-cachy-server:rolling
 
 
-RUN mkdir -p /sysroo
+RUN mkdir -p /sysroot
 RUN mkdir -p /usr/
 
 
