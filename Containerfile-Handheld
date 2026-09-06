@@ -43,6 +43,8 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 #
 #  :::::: finish :::::: 
+RUN rm -rf /tmp/*
+RUN rm -rf /run/*
 RUN rm -rf /boot/*
 RUN rm -rf /var/*
 RUN rm -rf /usr/etc
