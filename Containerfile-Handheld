@@ -24,6 +24,7 @@ RUN pacman -Syyu --needed --noconfirm curl
 RUN curl -sSL https://raw.githubusercontent.com/CachyOS/CachyOS-Live-ISO/refs/heads/cachyos-deckify/archiso/packages_handheld.x86_64 > /tmp/packages.txt
 #RUN yes | pacman -Sy --needed --noconfirm $( cat /tmp/packages.txt )
 
+RUN pacman -Sy --noconfirm --overwrite="*" cachyos-deckify cachyos-deckify-headers
 
 RUN while pacman -Sy --needed --noconfirm $(cat /tmp/packages.txt) 2>&1 | tee /tmp/pacman.log | grep -q "are in conflict"; do \
         conflicting_pkg=$(grep "are in conflict" /tmp/pacman.log | sed -E 's/.*and ([^ ]+) are in.*/\1/'); \
@@ -31,6 +32,7 @@ RUN while pacman -Sy --needed --noconfirm $(cat /tmp/packages.txt) 2>&1 | tee /t
         pacman -Rdd --noconfirm "$conflicting_pkg" || break; \
     done
 
+RUN pacman -R --noconfirm firefox
 
 RUN pacman -Scc --noconfirm || true
 RUN rm -rf /var/lib/pacman/sync/*
