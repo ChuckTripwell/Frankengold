@@ -1,5 +1,5 @@
 
-FROM ghcr.io/existingperson08/arch-base:latest
+FROM ghcr.io/existingperson08/arch-base-cachy:latest
 RUN pacman -Syu --noconfirm
 
 RUN rm -rf /lib/modules/*
