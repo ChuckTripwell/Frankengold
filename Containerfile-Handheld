@@ -26,8 +26,7 @@ WORKDIR /tmp/bootc
 ENV CARGO_BUILD_JOBS=1 \
     CARGO_PROFILE_RELEASE_DEBUG=0 \
     CARGO_PROFILE_RELEASE_LTO=false
-RUN git clone --depth 1 \
-        https://github.com/bootc-dev/bootc.git . && \
+RUN git clone https://github.com/bootc-dev/bootc.git . && \
     make bin install-all DESTDIR=/output
 
 # install-all also emits bootc's development integration-test executable and
