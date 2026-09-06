@@ -1,6 +1,133 @@
 ##################################################################################################################################################
+### :::::: Pull CachyOS :::::: ###
+##################################################################################################################################################
+FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
+
+# :::::: Prepare the kernel :::::: 
+  RUN rm -rf /lib/modules/*
+  RUN pacman -Sy --disable-sandbox --noconfirm
+  RUN pacman -Sy --disable-sandbox --noconfirm archlinux-keyring cachyos-keyring
+  RUN pacman -Sy --disable-sandbox --noconfirm
+  RUN pacman -S --disable-sandbox --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
+  RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32-vulkan-icd-loader dkms
+
+#  :::::: Keep the Nvidia-driver version number to use later :::::: 
+  RUN pacman -Q nvidia-utils | awk '{print $2}' | cut -d- -f1 > /nvidia_version.txt
+
+
+##################################################################################################################################################
+### :::::: Pull Ublue-OS :::::: ###
+##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 
+#  :::::: Nvidia fixes :::::: 
+# since we're using a forign kernel, the drivers must match their versions, otherwise the GPU will not be recognized.
+
+# so, first we remove the default nvidia driver...
+  RUN dnf5 -y remove nvidia-gpu-firmware nvidia-driver-common
+
+# then we check what the version was on cachyos:
+  COPY --from=cachyos /nvidia_version.txt /tmp/
+
+# enabling the rpmfusion repositories:
+  RUN dnf5 -y install \
+      https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+      https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+  
+# ...and now we can install the correct version of the drivers so that the forign kernel recognizes the GPU:
+  RUN NVIDIA_VER=$(cat /tmp/nvidia_version.txt) && \
+      dnf5 -y install --allowerasing --setopt=tsflags=noscripts \
+      akmod-nvidia-*:$NVIDIA_VER-* \
+      xorg-x11-drv-nvidia-cuda-*:$NVIDIA_VER-*
+
+# :::::: forcefully remove and replace kernel :::::: 
+# this is where the magic happens!
+
+# removing any bazzite kernel present by force...  
+  RUN rm -rf /lib/modules/*
+
+# ...and then forcing in the cachyos kernel we installed earlier instead.  
+  COPY --from="cachyos" /lib/modules /lib/modules
+
+# licenses, since we don't want to get in trouble...
+  COPY --from="cachyos" /usr/share/licenses /usr/share/licenses
+
+##################################################################################################################################################
+### :::::: Modifications :::::: ###
+##################################################################################################################################################
+# :::::: disable countme :::::: 
+# ( sorry, I know it's safe, but I prefer my telemetry opt-in. )
+  RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
+
+# :::::: install controld dns :::::: 
+# can be activated manually
+  RUN curl -fsSL https://dl.controld.com/linux-amd64/ctrld -o /usr/bin/ctrld && chmod 755 /usr/bin/ctrld
+
+# :::::: tells distrobox to use a sub-directory for /home :::::: 
+# ...but only when using the command line!
+  RUN mkdir -p /usr/share/distrobox/
+  RUN touch /usr/share/distrobox/distrobox.conf
+  RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
+  RUN dnf5 -y install --allowerasing distrobox
+
+# :::::: Preformence-related stuff :::::: 
+# scx gui and settings - essential for performance
+  RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+  RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+  RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+
+# :::::: Install Some Packages :::::: 
+# each line installs a new package, to make debugging easier.
+  RUN sed -i 's/^enabled=0$/enabled=1/' /etc/yum.repos.d/terra* # - enable terra repos
+      RUN dnf5 -y install --allowerasing zcfan # - can be activated manually
+      RUN dnf5 -y install --allowerasing kde-partitionmanager
+  RUN sed -i 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/terra* # - disable terra repos
+
+# ::::::  Set vm.max_map_count for stability/improved gaming performance :::::: 
+# as recommended here: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count
+  RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
+
+# :::::: Fix Audio :::::: 
+# audio sometimes stops until a reboot. this SHOULD(?) fix the issue...
+
+# create service:
+RUN mkdir -p /etc/systemd/user && \
+    echo "[Unit]" > /etc/systemd/user/audio-reset.service && \
+    echo "Description=Reset audio on user session start" >> /etc/systemd/user/audio-reset.service && \
+    echo "After=pipewire.service wireplumber.service" >> /etc/systemd/user/audio-reset.service && \
+    echo "" >> /etc/systemd/user/audio-reset.service && \
+    echo "[Service]" >> /etc/systemd/user/audio-reset.service && \
+    echo "Type=oneshot" >> /etc/systemd/user/audio-reset.service && \
+    echo "ExecStart=/usr/bin/systemctl --user restart pipewire pipewire-pulse wireplumber" >> /etc/systemd/user/audio-reset.service && \
+    echo "" >> /etc/systemd/user/audio-reset.service && \
+    echo "[Install]" >> /etc/systemd/user/audio-reset.service && \
+    echo "WantedBy=default.target" >> /etc/systemd/user/audio-reset.service
+
+# activate service:
+RUN systemctl --global enable audio-reset.service
+
+##################################################################################################################################################
+### :::::: Security and Finalization :::::: ###
+##################################################################################################################################################
+
+# :::::: Fix SELinux :::::: 
+# set SELinux to enforcing since I don't have time to read logs lol
+  RUN sed -i 's/^SELINUX=permissive/SELINUX=enforcing/' /etc/selinux/config
+
+# tell the system that .autorelabel is now in /etc to prevent a bootloop
+  RUN mkdir -p /usr/lib/bootc/kargs.d/
+  RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system/selinux-autorelabel-mark.service
+  RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/libexec/selinux/selinux-autorelabel
+  RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system-generators/selinux-autorelabel-generator.sh
+
+# create an .autorelabel file in /etc to prepare for SELinux
+  RUN touch /etc/.autorelabel
+
+# tell Grub to add kargs - without them SELinux and nvidia-drivers might not work
+  RUN echo 'kargs = ["lsm=landlock,lockdown,yama,integrity,selinux,bpf", "selinux=1", "enforcing=1", "selinux_dontaudit=0", "selinux_deny_unknown=1"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
+
+# change sedispatch state - needed for SELinux to work
+  RUN sed -i 's/active = yes/active = no/' /etc/audit/plugins.d/sedispatch.conf
 
 # :::::: Add support for SecureBoot :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
