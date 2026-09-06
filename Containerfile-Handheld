@@ -3,7 +3,7 @@
 
 FROM ghcr.io/cmspam/cache22-cachy-kde:rolling
 
-RUN pacman -R $( pacman -Qqe )
+RUN pacman -R --noconfirm $( pacman -Qqe )
 
 
 
