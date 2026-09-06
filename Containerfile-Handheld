@@ -1,7 +1,7 @@
 
 
 
-FROM ghcr.io/cmspam/cache22-cachy-kde:rolling
+FROM ghcr.io/cmspam/cache22-cachy-server:rolling
 
 
 RUN mkdir -p /usr/lib/sysimage/pacman/gnupg
