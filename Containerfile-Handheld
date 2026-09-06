@@ -8,6 +8,9 @@ FROM ghcr.io/cmspam/cache22-cachy-kde:rolling
 RUN rm -rf /usr/lib/modules/*
 
 
+RUN mkdir -p /usr/lib/sysimage/pacman/gnupg
+RUN pacman-key --init && pacman-key --populate
+
 
 RUN pacman -Sy --disable-sandbox --noconfirm
 RUN pacman -Syy --disable-sandbox --noconfirm archlinux-keyring cachyos-keyring curl
