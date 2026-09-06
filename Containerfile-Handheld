@@ -32,7 +32,7 @@ RUN while pacman -Sy --needed --noconfirm $(cat /tmp/packages.txt) 2>&1 | tee /t
         pacman -Rdd --noconfirm "$conflicting_pkg" || break; \
     done
 
-RUN pacman -R --noconfirm firefox
+RUN pacman -R --noconfirm firefox || true
 
 RUN pacman -Scc --noconfirm || true
 RUN rm -rf /var/lib/pacman/sync/*
