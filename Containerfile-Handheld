@@ -1,6 +1,6 @@
 FROM ghcr.io/tartaria-dev/tartaria:unstable-cachy-mahleb AS base
 
-RUN ln -s /sysroot/ostree /ostree
+RUN ln -s sysroot/ostree /ostree
 
 LABEL containers.bootc 1
 RUN bootc container lint
