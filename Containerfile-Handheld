@@ -3,6 +3,8 @@
 
 FROM ghcr.io/cmspam/cache22-cachy-kde:rolling
 
+RUN pacman -R $( pacman -Qqe )
+
 
 
 RUN rm -rf /usr/lib/modules/*
