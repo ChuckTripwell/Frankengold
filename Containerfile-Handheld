@@ -2,7 +2,7 @@
 FROM ghcr.io/existingperson08/arch-base:latest
 RUN pacman -Syu --noconfirm
 
-RUN rm -rf /usr/lib/modules/*
+RUN rm -rf /lib/modules/*
 
 RUN pacman -Syu --noconfirm linux-cachyos-deckify
 
