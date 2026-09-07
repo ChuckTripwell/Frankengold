@@ -14,7 +14,7 @@ RUN pacman -S --disable-sandbox --noconfirm vulkan-tools vulkan-icd-loader lib32
 ##################################################################################################################################################
 ### :::::: Pull Ublue-OS :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite-deck:testing
+FROM ghcr.io/ublue-os/bazzite-deck:stable
 
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules
