@@ -44,6 +44,7 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y copr enable ascendxps/AscendXP
+RUN dnf5 -y install cpuid-fault-emulation-kmod
 RUN dnf5 -y install linuwux-runtime
 
 # :::::: Fix Audio :::::: 
@@ -78,7 +79,7 @@ RUN mkdir -p /usr/lib/bootc/kargs.d/
 RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system/selinux-autorelabel-mark.service
 RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/libexec/selinux/selinux-autorelabel
 RUN sed -i 's|/\.autorelabel|/etc/.autorelabel|g' /usr/lib/systemd/system-generators/selinux-autorelabel-generator.sh
-RUN echo 'kargs = ["lsm=landlock,lockdown,yama,integrity,selinux,bpf", "selinux=1", "enforcing=1", "selinux_dontaudit=0", "selinux_deny_unknown=1", "clearcpuid=514"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
+RUN echo 'kargs = ["lsm=landlock,lockdown,yama,integrity,selinux,bpf", "selinux=1", "enforcing=1", "selinux_dontaudit=0", "selinux_deny_unknown=1"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
 #
 RUN sed -i 's/active = yes/active = no/' /etc/audit/plugins.d/sedispatch.conf
 #
