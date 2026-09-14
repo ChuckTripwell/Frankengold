@@ -43,7 +43,8 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 #RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
-#RUN dnf5 -y install --allowerasing python3-pygame
+RUN dnf5 -y copr enable ascendxps/AscendXP
+RUN dnf5 -y install linuwux-runtime
 
 # :::::: Fix Audio :::::: 
 RUN mkdir -p /etc/systemd/user && \
