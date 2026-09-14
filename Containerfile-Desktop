@@ -82,6 +82,7 @@ FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
   RUN sed -i 's/^enabled=1$/enabled=0/' /etc/yum.repos.d/terra* # - disable terra repos
 
 RUN dnf5 -y copr enable ascendxps/AscendXP
+RUN dnf5 -y install cpuid-fault-emulation-kmod
 RUN dnf5 -y install linuwux-runtime
 
 # ::::::  Set vm.max_map_count for stability/improved gaming performance :::::: 
