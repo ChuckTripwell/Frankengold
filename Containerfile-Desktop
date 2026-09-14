@@ -37,8 +37,8 @@ FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 # ...and now we can install the correct version of the drivers so that the forign kernel recognizes the GPU:
   RUN NVIDIA_VER=$(cat /tmp/nvidia_version.txt) && \
       dnf5 -y install --allowerasing --setopt=tsflags=noscripts \
-      akmod-nvidia-*:$NVIDIA_VER-* \
-      xorg-x11-drv-nvidia-cuda-*:$NVIDIA_VER-*
+      akmod-nvidia-*:$NVIDIA_VER* \
+      xorg-x11-drv-nvidia-cuda-*:$NVIDIA_VER*
 
 # :::::: forcefully remove and replace kernel :::::: 
 # this is where the magic happens!
