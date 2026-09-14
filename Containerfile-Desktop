@@ -85,7 +85,7 @@ RUN dnf5 -y copr enable ascendxps/AscendXP
 #RUN dnf5 -y install cpuid-fault-emulation-kmod
 RUN dnf5 -y install linuwux-runtime
 
-RUN echo 'kargs = ["clearcpuid=umip"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
+#RUN echo 'kargs = ["clearcpuid=umip"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
 
 # ::::::  Set vm.max_map_count for stability/improved gaming performance :::::: 
 # as recommended here: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count
