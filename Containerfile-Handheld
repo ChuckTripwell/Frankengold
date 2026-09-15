@@ -45,12 +45,11 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y copr enable ascendxps/AscendXP
   RUN dnf5 -y install linuwux-runtime
-  RUN dnf5 -y install --setopt=tsflags=noscripts akmod-cpuid-fault-emulation cpuid-fault-emulation-kmod-common
+#  RUN dnf5 -y install --setopt=tsflags=noscripts akmod-cpuid-fault-emulation cpuid-fault-emulation-kmod-common
 RUN dnf5 -y copr disable ascendxps/AscendXP
 #RUN systemctl enable cpuid-fault-emulation.service
 
-
-#RUN echo 'kargs = ["clearcpuid=514"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
+RUN echo 'kargs = ["clearcpuid=514"]' > /usr/lib/bootc/kargs.d/90-security-overrides.toml
 
 # :::::: Fix Audio :::::: 
 RUN mkdir -p /etc/systemd/user && \
