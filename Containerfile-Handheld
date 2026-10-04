@@ -6,7 +6,9 @@ RUN rm -rf /lib/modules/*
 
 COPY --from=oscore /usr/bin/bootc /usr/bin/
 COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
-COPY --from=oscore /usr/lib/dracut/ /usr/lib/dracut/
+COPY --from=oscore /usr/lib/dracut /usr/lib/
+COPY --from=oscore /etc/sysconfig /etc/
+
 
 #RUN pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
 #RUN pacman-key --init && pacman-key --lsign-key 3056513887B78AEB
