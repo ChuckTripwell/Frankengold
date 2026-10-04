@@ -17,7 +17,7 @@ FROM ghcr.io/ferret-linux/steamos-otr:latest AS builder
 #RUN pacman -Syu --noconfirm
 
 #RUN pacman -S --noconfirm \
-    chaotic-aur/bootc
+#    chaotic-aur/bootc
 
 
 RUN pacman -Sy --noconfirm \
