@@ -3,41 +3,46 @@ FROM ghcr.io/cgwalters/c9s-oscore AS oscore
 FROM ghcr.io/ferret-linux/steamos-otr:latest AS builder
 
 
-# Chaotic AUR repo
-RUN pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-RUN pacman-key --init && pacman-key --lsign-key 3056513887B78AEB
-RUN pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' --noconfirm
-RUN pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
-RUN echo -e '[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
-# Hec's Bootc repo
-RUN pacman-key --recv-key 5DE6BF3EBC86402E7A5C5D241FA48C960F9604CB --keyserver keyserver.ubuntu.com
-RUN pacman-key --lsign-key 5DE6BF3EBC86402E7A5C5D241FA48C960F9604CB
-RUN echo -e '[bootc]\nSigLevel = Required\nServer=https://github.com/hecknt/arch-bootc-pkgs/releases/download/$repo' >> /etc/pacman.conf
 
-RUN pacman -Syu --noconfirm
+#RUN pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+#RUN pacman-key --init && pacman-key --lsign-key 3056513887B78AEB
+#RUN pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' --noconfirm
+#RUN pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
+#RUN echo -e '[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
 
-RUN pacman -S --noconfirm \
+#RUN pacman-key --recv-key 5DE6BF3EBC86402E7A5C5D241FA48C960F9604CB --keyserver keyserver.ubuntu.com
+#RUN pacman-key --lsign-key 5DE6BF3EBC86402E7A5C5D241FA48C960F9604CB
+#RUN echo -e '[bootc]\nSigLevel = Required\nServer=https://github.com/hecknt/arch-bootc-pkgs/releases/download/$repo' >> /etc/pacman.conf
+
+#RUN pacman -Syu --noconfirm
+
+#RUN pacman -S --noconfirm \
     chaotic-aur/bootc
 
 
 RUN pacman -Sy --noconfirm \
   steamos-manager steamos-powerbuttond jupiter-fan-control steamdeck-dsp steamos-manager inputplumber steamos-powerbuttond \
-  plasma-login-manager plasma-desktop linux-cachyos-deckify linux-cachyos-deckify-headers \
+  plasma-login-manager plasma-desktop \
   make git rust go-md2man ostree glibc pkgconf base bubblewrap dracut linux-firmware ostree btrfs-progs e2fsprogs xfsprogs dosfstools skopeo dbus dbus-glib glib2 ostree shadow openssh
   #mokutil sbsigntools base-devel openssl elfutils
 
 RUN pacman -S --clean --noconfirm
 
-#COPY --from=oscore /usr/bin/bootc /usr/bin/
-#COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
+COPY --from=oscore /usr/bin/bootc /usr/bin/
+COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
 
 
-#FROM ghcr.io/oci-native/archlinux-base:latest
-#COPY --from=builder / /
+FROM ghcr.io/oci-native/archlinux-base:latest
+COPY --from=builder / /
 
-RUN rm -rf /ostree
-RUN rm -rf /run/ostree
-RUN rm -rf /tmp/*
+RUN rm -rf /lib/modules/*
+
+RUN pacman -Sy --noconfirm \
+    linux-cachyos-deckify linux-cachyos-deckify-headers
+
+#RUN rm -rf /ostree
+#RUN rm -rf /run/ostree
+#RUN rm -rf /tmp/*
 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
