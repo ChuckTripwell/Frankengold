@@ -1,4 +1,6 @@
-FROM ghcr.io/ferret-linux/steamos-otr:latest
+FROM ghcr.io/cgwalters/c9s-oscore AS oscore
+
+FROM ghcr.io/ferret-linux/steamos-otr:latest AS builder
 
 RUN pacman -Sy --noconfirm \
   steamos-manager steamos-powerbuttond jupiter-fan-control steamdeck-dsp steamos-manager inputplumber steamos-powerbuttond \
@@ -8,7 +10,38 @@ RUN pacman -Sy --noconfirm \
 
 RUN pacman -S --clean --noconfirm
 
+RUN mv /newroot/home /newroot/var/
+RUN ln -s var/home /newroot/home
 
+RUN mv /newroot/mnt /newroot/var/
+RUN ln -s var/mnt /newroot/mnt
+
+RUN rmdir /newroot/var/opt
+RUN mv /newroot/opt /newroot/var/
+RUN ln -s var/opt /newroot/opt
+
+RUN mv /newroot/root /newroot/var/roothome
+RUN ln -s var/roothome /newroot/root
+
+RUN mv /newroot/srv /newroot/var/srv
+RUN ln -s var/srv /newroot/srv
+
+COPY --from=oscore /usr/bin/bootc /newroot/usr/bin/
+COPY --from=oscore /usr/lib/bootc /newroot/usr/lib/bootc
+
+RUN mkdir -p /newroot/sysroot/ostree
+RUN ln -s sysroot/ostree /newroot/ostree
+RUN ostree --repo=/repo init --mode=bare
+RUN ostree --repo=/repo commit --orphan --tree=dir=/newroot --no-xattrs
+
+# WORKAROUND: ERROR Creating ostree deployment: Performing deployment: Importing: Unencapsulating base: Importing commit: Invalid path (no parent) .lock
+RUN rm /repo/.lock
+
+RUN mv /repo /newroot/sysroot/ostree/
+
+FROM scratch
+COPY --from=builder /newroot /
+LABEL ostree.bootable="true"
 
 RUN sed -i 's|^HOME=.*|HOME=/var/home|' "/etc/default/useradd" && \
     rm -rf /boot /home /root /usr/local /srv /opt /mnt /var /usr/lib/sysimage/log /usr/lib/sysimage/cache/pacman/pkg && \
@@ -17,7 +50,6 @@ RUN sed -i 's|^HOME=.*|HOME=/var/home|' "/etc/default/useradd" && \
     echo "$(for dir in opt home srv mnt usrlocal ; do echo "d /var/$dir 0755 root root -" ; done)" | tee -a "/usr/lib/tmpfiles.d/bootc-base-dirs.conf" && \
     printf "d /var/roothome 0700 root root -\nd /run/media 0755 root root -" | tee -a "/usr/lib/tmpfiles.d/bootc-base-dirs.conf" && \
     printf '[composefs]\nenabled = yes\n[sysroot]\nreadonly = true\n' | tee "/usr/lib/ostree/prepare-root.conf"
-
 
 LABEL containers.bootc 1
 
