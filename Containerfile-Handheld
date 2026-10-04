@@ -1,29 +1,24 @@
-FROM ghcr.io/cgwalters/c9s-oscore AS oscore
-
 FROM ghcr.io/ferret-linux/steamos-otr:latest AS builder
 
 RUN rm -rf /lib/modules/*
+RUN pacman -Sy --noconfirm \
+    linux-cachyos-deckify linux-cachyos-deckify-headers
 
-COPY --from=oscore /usr/bin/bootc /usr/bin/
-COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
-#COPY --from=oscore /usr/lib/dracut /usr/lib/
-#COPY --from=oscore /etc/sysconfig /etc/
+RUN pacman -Sy --noconfirm --overwrite="*" \
+  base base-devel make
 
-
-#RUN pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-#RUN pacman-key --init && pacman-key --lsign-key 3056513887B78AEB
-#RUN pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' --noconfirm
-#RUN pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
-#RUN echo -e '[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
+RUN mkdir -p /tmp/output
+RUN git clone "https://github.com/bootc-dev/bootc.git" .
+RUN make bin install-all DESTDIR=/tmp/output
 
 #RUN pacman-key --recv-key 5DE6BF3EBC86402E7A5C5D241FA48C960F9604CB --keyserver keyserver.ubuntu.com
 #RUN pacman-key --lsign-key 5DE6BF3EBC86402E7A5C5D241FA48C960F9604CB
 #RUN echo -e '[bootc]\nSigLevel = Required\nServer=https://github.com/hecknt/arch-bootc-pkgs/releases/download/$repo' >> /etc/pacman.conf
 
-#RUN pacman -Syu --noconfirm
+#RUN pacman -Sy --noconfirm
 
 #RUN pacman -S --noconfirm \
-#    chaotic-aur/bootc
+#    bootc
 
 
 RUN pacman -Sy --noconfirm --overwrite="*" \
@@ -32,31 +27,13 @@ RUN pacman -Sy --noconfirm --overwrite="*" \
   make git rust go-md2man ostree glibc pkgconf base bubblewrap dracut linux-firmware ostree btrfs-progs e2fsprogs xfsprogs dosfstools skopeo dbus dbus-glib glib2 ostree shadow openssh
   #mokutil sbsigntools base-devel openssl elfutils
 
+RUN pacman --noconfirm -Rdd make base-devel
+
 RUN pacman -S --clean --noconfirm
 
 
-#FROM ghcr.io/oci-native/archlinux-base:latest
-#COPY --from=builder / /
-
-RUN pacman -Sy --noconfirm \
-    linux-cachyos-deckify linux-cachyos-deckify-headers
-
-#RUN rm -rf /ostree
-#RUN rm -rf /run/ostree
-#RUN rm -rf /tmp/*
-
-RUN rm -rf /boot /home /root /usr/local /srv /opt /mnt /var /usr/lib/sysimage/log /usr/lib/sysimage/cache/pacman/pkg
-RUN mkdir -p /sysroot /boot /usr/lib/ostree /var
-RUN ln -sT sysroot/ostree /ostree && ln -sT var/roothome /root && ln -sT var/srv /srv && ln -sT var/opt /opt && ln -sT var/mnt /mnt && ln -sT var/home /home && ln -sT ../var/usrlocal /usr/local
-RUN echo "$(for dir in opt home srv mnt usrlocal ; do echo "d /var/$dir 0755 root root -" ; done)" | tee -a "/usr/lib/tmpfiles.d/bootc-base-dirs.conf"
-RUN printf "d /var/roothome 0700 root root -\nd /run/media 0755 root root -" | tee -a "/usr/lib/tmpfiles.d/bootc-base-dirs.conf"
-RUN printf '[composefs]\nenabled = yes\n[sysroot]\nreadonly = true\n' | tee "/usr/lib/ostree/prepare-root.conf"
 
 
-RUN mkdir -p /usr/lib/dracut/dracut.conf.d/
-RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf
-RUNprintf 'reproducible=yes\nhostonly=no\ncompress=zstd\nadd_dracutmodules+=" bootc "' | tee "/usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-container-build.conf"
-RUN dracut --force "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)/initramfs.img"
 
 
 
