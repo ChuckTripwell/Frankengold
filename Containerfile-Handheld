@@ -2,6 +2,24 @@ FROM ghcr.io/cgwalters/c9s-oscore AS oscore
 
 FROM ghcr.io/ferret-linux/steamos-otr:latest AS builder
 
+
+# Chaotic AUR repo
+RUN pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+RUN pacman-key --init && pacman-key --lsign-key 3056513887B78AEB
+RUN pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' --noconfirm
+RUN pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
+RUN echo -e '[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
+# Hec's Bootc repo
+RUN pacman-key --recv-key 5DE6BF3EBC86402E7A5C5D241FA48C960F9604CB --keyserver keyserver.ubuntu.com
+RUN pacman-key --lsign-key 5DE6BF3EBC86402E7A5C5D241FA48C960F9604CB
+RUN echo -e '[bootc]\nSigLevel = Required\nServer=https://github.com/hecknt/arch-bootc-pkgs/releases/download/$repo' >> /etc/pacman.conf
+
+RUN pacman -Syu --noconfirm
+
+RUN pacman -S --noconfirm \
+    chaotic-aur/bootc
+
+
 RUN pacman -Sy --noconfirm \
   steamos-manager steamos-powerbuttond jupiter-fan-control steamdeck-dsp steamos-manager inputplumber steamos-powerbuttond \
   plasma-login-manager plasma-desktop linux-cachyos-deckify linux-cachyos-deckify-headers \
@@ -10,8 +28,8 @@ RUN pacman -Sy --noconfirm \
 
 RUN pacman -S --clean --noconfirm
 
-COPY --from=oscore /usr/bin/bootc /usr/bin/
-COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
+#COPY --from=oscore /usr/bin/bootc /usr/bin/
+#COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
 
 
 #FROM ghcr.io/oci-native/archlinux-base:latest
@@ -27,4 +45,4 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 LABEL ostree.bootable="true"
 LABEL containers.bootc 1
 
-#RUN bootc -h
+RUN bootc -h
