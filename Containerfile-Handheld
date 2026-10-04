@@ -5,7 +5,7 @@ RUN pacman -Sy --noconfirm \
     linux-cachyos-deckify linux-cachyos-deckify-headers
 
 RUN pacman -Sy --noconfirm --overwrite="*" \
-  base base-devel make
+  base base-devel make rust
 
 RUN mkdir -p /tmp/output
 RUN cd /tmp/ && git clone "https://github.com/bootc-dev/bootc.git" && cd bootc && make bin install-all DESTDIR=/tmp/output
