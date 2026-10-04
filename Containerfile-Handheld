@@ -2,7 +2,10 @@ FROM ghcr.io/cgwalters/c9s-oscore AS oscore
 
 FROM ghcr.io/ferret-linux/steamos-otr:latest AS builder
 
+RUN rm -rf /lib/modules/*
 
+COPY --from=oscore /usr/bin/bootc /usr/bin/
+COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
 
 #RUN pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
 #RUN pacman-key --init && pacman-key --lsign-key 3056513887B78AEB
@@ -28,14 +31,9 @@ RUN pacman -Sy --noconfirm \
 
 RUN pacman -S --clean --noconfirm
 
-COPY --from=oscore /usr/bin/bootc /usr/bin/
-COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
-
 
 #FROM ghcr.io/oci-native/archlinux-base:latest
 #COPY --from=builder / /
-
-RUN rm -rf /lib/modules/*
 
 RUN pacman -Sy --noconfirm \
     linux-cachyos-deckify linux-cachyos-deckify-headers
