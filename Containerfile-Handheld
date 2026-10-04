@@ -32,8 +32,8 @@ COPY --from=oscore /usr/bin/bootc /usr/bin/
 COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
 
 
-FROM ghcr.io/oci-native/archlinux-base:latest
-COPY --from=builder / /
+#FROM ghcr.io/oci-native/archlinux-base:latest
+#COPY --from=builder / /
 
 RUN rm -rf /lib/modules/*
 
