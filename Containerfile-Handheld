@@ -5,7 +5,7 @@ RUN pacman -Sy --noconfirm \
     linux-cachyos-deckify linux-cachyos-deckify-headers
 
 RUN pacman -Sy --noconfirm --overwrite="*" \
-  base base-devel make rust ostree
+  base base-devel make rust ostree linux-firmware dracut systemd btrfs-progs e2fsprogs xfsprogs binutils dosfstools skopeo dbus dbus-glib glib2 shadow cpio
 
 RUN mkdir -p /tmp/output
 RUN cd /tmp/ && git clone "https://github.com/bootc-dev/bootc.git" && cd bootc && make bin install-all DESTDIR=/tmp/output
@@ -23,7 +23,7 @@ RUN cd /tmp/ && git clone "https://github.com/bootc-dev/bootc.git" && cd bootc &
 RUN pacman -Sy --noconfirm --overwrite="*" \
   steamos-manager steamos-powerbuttond jupiter-fan-control steamdeck-dsp steamos-manager inputplumber steamos-powerbuttond \
   plasma-login-manager plasma-desktop \
-  make git rust go-md2man ostree glibc pkgconf base bubblewrap dracut linux-firmware ostree btrfs-progs e2fsprogs xfsprogs dosfstools skopeo dbus dbus-glib glib2 ostree shadow openssh
+  make git rust go-md2man ostree glibc pkgconf base bubblewrap \
   #mokutil sbsigntools base-devel openssl elfutils
 
 RUN pacman --noconfirm -Rdd make base-devel
