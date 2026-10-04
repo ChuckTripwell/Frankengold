@@ -31,7 +31,8 @@ RUN pacman --noconfirm -Rdd make base-devel
 RUN pacman -S --clean --noconfirm
 
 
-
+RUN mkdir -p /sysroot
+RUN rm -rf /run/ostree
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
       printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
