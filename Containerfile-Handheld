@@ -36,6 +36,8 @@ RUN pacman -S --clean --noconfirm
 #COPY --from=builder / /
 
 RUN rm -rf /ostree
+RUN rm -rf /run/ostree
+RUN rm -rf /tmp/*
 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
