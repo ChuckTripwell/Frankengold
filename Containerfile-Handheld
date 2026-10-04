@@ -23,7 +23,7 @@ RUN pacman -S --noconfirm \
 RUN pacman -Sy --noconfirm --overwrite="*" \
   steamos-manager steamos-powerbuttond jupiter-fan-control steamdeck-dsp steamos-manager inputplumber steamos-powerbuttond \
   plasma-login-manager plasma-desktop \
-  make git rust go-md2man ostree glibc pkgconf base bubblewrap \
+  make git rust go-md2man ostree glibc pkgconf base bubblewrap
   #mokutil sbsigntools base-devel openssl elfutils
 
 RUN pacman --noconfirm -Rdd make base-devel
