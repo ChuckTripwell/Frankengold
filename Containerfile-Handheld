@@ -5,8 +5,8 @@ FROM ghcr.io/ferret-linux/steamos-otr:latest AS builder
 RUN pacman -Sy --noconfirm \
   steamos-manager steamos-powerbuttond jupiter-fan-control steamdeck-dsp steamos-manager inputplumber steamos-powerbuttond \
   plasma-login-manager plasma-desktop linux-cachyos-deckify linux-cachyos-deckify-headers \
-  make git rust go-md2man ostree glibc pkgconf base bubblewrap dracut linux-firmware ostree btrfs-progs e2fsprogs xfsprogs dosfstools skopeo dbus dbus-glib glib2 ostree shadow openssh \
-  mokutil sbsigntools base-devel openssl elfutils
+  make git rust go-md2man ostree glibc pkgconf base bubblewrap dracut linux-firmware ostree btrfs-progs e2fsprogs xfsprogs dosfstools skopeo dbus dbus-glib glib2 ostree shadow openssh
+  #mokutil sbsigntools base-devel openssl elfutils
 
 RUN pacman -S --clean --noconfirm
 
@@ -14,9 +14,9 @@ COPY --from=oscore /usr/bin/bootc /usr/bin/
 COPY --from=oscore /usr/lib/bootc /usr/lib/bootc
 
 
-FROM ghcr.io/oci-native/archlinux-base:latest
-COPY --from=builder / /
-LABEL ostree.bootable="true"
+#FROM ghcr.io/oci-native/archlinux-base:latest
+#COPY --from=builder / /
+
 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
@@ -24,6 +24,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
+LABEL ostree.bootable="true"
 LABEL containers.bootc 1
 
 #RUN bootc -h
