@@ -4,9 +4,9 @@ FROM ghcr.io/ferret-linux/steamos-otr:latest AS builder
 
 RUN pacman -Sy --noconfirm \
   steamos-manager steamos-powerbuttond jupiter-fan-control steamdeck-dsp steamos-manager inputplumber steamos-powerbuttond \
-  plasma-login-manager plasma-desktop linux-cachyos-deckify \
+  plasma-login-manager plasma-desktop linux-cachyos-deckify linux-cachyos-deckify-headers \
   make git rust go-md2man ostree glibc pkgconf base bubblewrap dracut linux-firmware ostree btrfs-progs e2fsprogs xfsprogs dosfstools skopeo dbus dbus-glib glib2 ostree shadow openssh \
-  mokutil sbsigntools
+  mokutil sbsigntools base-devel openssl elfutils
 
 RUN pacman -S --clean --noconfirm
 
