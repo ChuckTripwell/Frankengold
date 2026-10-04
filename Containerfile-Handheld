@@ -24,7 +24,7 @@ COPY --from=oscore /usr/lib/dracut/ /usr/lib/dracut/
 #    chaotic-aur/bootc
 
 
-RUN pacman -Sy --noconfirm \
+RUN pacman -Sy --noconfirm --overwrite="*" \
   steamos-manager steamos-powerbuttond jupiter-fan-control steamdeck-dsp steamos-manager inputplumber steamos-powerbuttond \
   plasma-login-manager plasma-desktop \
   make git rust go-md2man ostree glibc pkgconf base bubblewrap dracut linux-firmware ostree btrfs-progs e2fsprogs xfsprogs dosfstools skopeo dbus dbus-glib glib2 ostree shadow openssh
