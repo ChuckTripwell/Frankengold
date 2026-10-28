@@ -35,11 +35,13 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 
 # :::::: install preformence-related stuff :::::: 
 RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
-  RUN dnf5 -y install --allowerasing scx-scheds || true 
-  RUN dnf5 -y install --allowerasing scx-tools || true
-  RUN dnf5 -y install --allowerasing scxctl || true
-  RUN dnf5 -y swap zram-generator-defaults cachyos-settings # || true
-  RUN dnf5 -y install --allowerasing uksmd scx-manager || true
+  RUN dnf5 -y install --allowerasing scx-scheds
+  RUN dnf5 -y install --allowerasing scx-tools 
+  RUN dnf5 -y install --allowerasing scxctl
+  RUN dnf5 -y swap zram-generator-defaults cachyos-settings
+  RUN dnf5 -y install --allowerasing uksmd scx-manager
+  RUN dnf5 -y install --allowerasing ananicy-cpp
+  RUN dnf5 -y install --allowerasing uksmd
 RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: Small fixes ::::::
