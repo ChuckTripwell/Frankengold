@@ -38,7 +38,7 @@ RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
   RUN dnf5 -y install --allowerasing scx-scheds || true 
   RUN dnf5 -y install --allowerasing scx-tools || true
   RUN dnf5 -y install --allowerasing scxctl || true
-  RUN dnf5 -y --allowerasing swap zram-generator-defaults cachyos-settings # || true
+  RUN dnf5 -y swap zram-generator-defaults cachyos-settings # || true
   RUN dnf5 -y install --allowerasing uksmd scx-manager || true
 RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
